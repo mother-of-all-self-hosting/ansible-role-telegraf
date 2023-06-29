@@ -33,6 +33,9 @@ telegraf_container_additional_networks: []
 telegraf_influx_token: ''
 telegraf_config_link: ''
 
+# Set true to get a lot more logs on telegraf's behaviour
+telegraf_debug: false
+
 # Additional environment variables to pass to the telegraf container.
 # You can use this to further influence the default configuration.
 #
