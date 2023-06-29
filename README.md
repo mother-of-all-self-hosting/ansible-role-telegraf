@@ -3,7 +3,7 @@
 [telegraf](https://www.influxdata.com/) is a self-hosted time-series database. This role helps you to set up telegraf:
 
 - with everything run in [Docker](https://www.docker.com/) containers
-- powered by [the official telegraf container image](https://hub.docker.com/r/superseriousbusiness/telegraf/)
+- powered by [the official telegraf container image](https://hub.docker.com/r/_/telegraf/)
 
 
 ## Installing
