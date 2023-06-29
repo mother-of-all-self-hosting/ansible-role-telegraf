@@ -1,0 +1,23 @@
+---
+
+- name: Check existence of telegraf systemd service
+  ansible.builtin.stat:
+    path: "{{ devture_systemd_docker_base_systemd_path }}/{{ telegraf_identifier }}.service"
+  register: telegraf_service_stat
+
+- when: telegraf_service_stat.stat.exists | bool
+  block:
+    - name: Ensure telegraf service is stopped
+      ansible.builtin.service:
+        name: "{{ telegraf_identifier }}"
+        state: stopped
+        daemon_reload: true
+    - name: Ensure telegraf service doesn't exist
+      ansible.builtin.file:
+        dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ telegraf_identifier }}.service"
+        state: absent
+
+    - name: Ensure telegraf base path is files deleted (make sure to delete node data)
+      ansible.builtin.file:
+        path: "{{ telegraf_base_path }}"
+        state: absent

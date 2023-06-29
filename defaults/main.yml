@@ -1,0 +1,43 @@
+---
+
+telegraf_enabled: true
+telegraf_identifier: telegraf
+
+telegraf_uid: ''
+telegraf_gid: ''
+
+telegraf_base_path: "/{{ telegraf_identifier }}"
+telegraf_config_path: "{{ telegraf_base_path }}/config"
+telegraf_data_path: "{{ telegraf_base_path }}/data"
+telegraf_env_path: "{{ telegraf_config_path }}/env"
+
+telegraf_systemd_required_services_list: ['docker.service']
+
+telegraf_version: 1.27.1
+
+telegraf_container_image: "{{ telegraf_container_image_registry_prefix }}library/telegraf:{{ telegraf_container_image_tag }}"
+telegraf_container_image_registry_prefix: docker.io/
+telegraf_container_image_tag: "{{ telegraf_version }}"
+telegraf_container_image_force_pull: "{{ telegraf_container_image.endswith(':latest') }}"
+
+telegraf_container_network: '{{ telegraf_identifier }}'
+
+# A list of additional container networks that the container would be connected to.
+# The role does not create these networks, so make sure they already exist.
+# Use this to expose this container to a reverse proxy, which runs in a different container network and influxdb.
+telegraf_container_additional_networks: []
+
+# The following must be set to enable telegraf to be configured via influxdb
+# You need to obtain these values in a set-up influxdb via Load Data -> Telegraf
+# then adding a telegraf configuraion. Then you should copy these values from the setup instructions.
+telegraf_influx_token: ''
+telegraf_config_link: ''
+
+# Additional environment variables to pass to the telegraf container.
+# You can use this to further influence the default configuration.
+#
+# Example:
+# telegraf_environment_variables_extension: |
+#   INFLUXD_BOLT_PATH=/root/telegraf.bolt
+#   DOCKER_telegraf_INIT_RETENTION=90d
+telegraf_environment_variables_extension: ''

@@ -1,0 +1,37 @@
+---
+
+- name: Ensure telegraf path exists
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: 0700
+    owner: "{{ telegraf_uid }}"
+    group: "{{ telegraf_gid }}"
+  with_items:
+    - {path: "{{ telegraf_base_path }}", when: true}
+    - {path: "{{ telegraf_config_path }}", when: true}
+
+
+- name: Ensure telegraf configuration is deployed
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/env.j2"
+    dest: "{{ telegraf_config_path }}/env"
+    owner: "{{ telegraf_uid }}"
+    group: "{{ telegraf_gid }}"
+    mode: 0640
+
+- name: Ensure telegraf network is created in Docker
+  community.docker.docker_network:
+    name: "{{ telegraf_container_network }}"
+    driver: bridge
+
+- name: Ensure telegraf container image is pulled
+  community.docker.docker_image:
+    name: "{{ telegraf_container_image }}"
+    source: "{{ 'pull' if ansible_version.major > 2 or ansible_version.minor > 7 else omit }}"
+
+- name: Ensure telegraf.service installed
+  ansible.builtin.template:
+    src: "{{ role_path }}/templates/systemd/telegraf.service.j2"
+    dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ telegraf_identifier }}.service"
+    mode: 0644

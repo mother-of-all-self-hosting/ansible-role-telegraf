@@ -1,0 +1,38 @@
+[Unit]
+Description=telegraf time-series database ({{ telegraf_identifier }})
+{% for service in telegraf_systemd_required_services_list %}
+Requires={{ service }}
+After={{ service }}
+{% endfor %}
+DefaultDependencies=no
+
+[Service]
+Type=simple
+ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} kill {{ telegraf_identifier }} 2>/dev/null || true'
+ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ telegraf_identifier }} 2>/dev/null || true'
+
+ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
+                --rm \
+                --name={{ telegraf_identifier }} \
+                --log-driver=none \
+                --user={{ telegraf_uid }}:{{ telegraf_gid }} \
+                --cap-drop=ALL \
+                --read-only \
+                --network={{ telegraf_container_network }} \
+                --env-file={{ telegraf_env_path }} \
+                {{ telegraf_container_image }} -- config {{ telegraf_config_link }}
+
+{% for network in telegraf_container_additional_networks %}
+ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} network connect {{ network }} {{ telegraf_identifier }}
+{% endfor %}
+
+ExecStart={{ devture_systemd_docker_base_host_command_docker }} start --attach {{ telegraf_identifier }}
+
+ExecStop=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} kill {{ telegraf_identifier }} 2>/dev/null || true'
+ExecStop=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ telegraf_identifier }} 2>/dev/null || true'
+Restart=always
+RestartSec=30
+SyslogIdentifier={{ telegraf_identifier }}
+
+[Install]
+WantedBy=multi-user.target
