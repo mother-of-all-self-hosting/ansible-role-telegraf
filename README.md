@@ -5,33 +5,30 @@
 - with everything run in [Docker](https://www.docker.com/) containers
 - powered by [the official telegraf container image](https://hub.docker.com/r/_/telegraf/)
 
+## Prerequisits
+
+* A installed and running [infuxdb](https://www.influxdata.com/).
+
 
 ## Installing
 
 To configure and install telegraf on your own server(s), you should use a playbook like [Mother of all self-hosting](https://github.com/mother-of-all-self-hosting/mash-playbook) or write your own.
 
-# Configuring this role for your playbook
+## Configuring this role for your playbook
 
-```
-telegraf_enabled: true
-telegraf_hostname: 'example.org'
-```
-
-## Advanced configuration
-
-To bootstrap an initial user, bucket and organization you can use
+This role depends on a influxdb configuring telegraf. You need to obtain the influx token and config link in the influxdb.
+In your browser, visit the influxdb and go to Load Data -> Telegraf.
+There you need to add a telegraf configuraion. You can now obtain these values from the setup instructions and oaste them here.
 
 ```yaml
-# Configure the inital user, organization and bucket
-# This setting will only be used once upon initial installation of telegraf. Changing this values after the first
-# start of telegraf will have no effect.
-# Not setting this will allow you to manually set these by visiting the domain you set in telegraf_hostname after installation.
-telegraf_init: true
-telegraf_init_username: "USERNAME"
-telegraf_init_password: "SUPERSECRETPASSWORD"
-telegraf_init_org: "EXAMPLE_ORG"
-telegraf_init_bucket: "SOMEBUCKET"
+telegraf_enabled: true
+telegraf_influx_token: SUPERSECRETTOKEN
+telegraf_config_link: https://influxdb.example.org/api/v2/telegrafs/01234569
 ```
+
+## Usage
+
+In your influxdb configure the telegraf plugins as you like.
 
 ## Support
 
