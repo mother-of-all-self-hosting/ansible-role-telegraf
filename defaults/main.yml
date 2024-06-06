@@ -13,7 +13,7 @@ telegraf_env_path: "{{ telegraf_config_path }}/env"
 
 telegraf_systemd_required_services_list: ['docker.service']
 
-telegraf_version: 1.27.1
+telegraf_version: 1.30.2
 
 telegraf_container_image: "{{ telegraf_container_image_registry_prefix }}library/telegraf:{{ telegraf_container_image_tag }}"
 telegraf_container_image_registry_prefix: docker.io/
