@@ -1,4 +1,9 @@
 # SPDX-FileCopyrightText: 2023 Julian-Samuel Gebühr
+# SPDX-FileCopyrightText: 2023 - 2024 Nikita Chernyi
+# SPDX-FileCopyrightText: 2023 - 2025 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2024 Sergio Durigan Junior
+# SPDX-FileCopyrightText: 2025 MASH project contributors
+# SPDX-FileCopyrightText: 2025 Suguru Hirahara
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -13,7 +18,11 @@ telegraf_gid: ''
 telegraf_base_path: "/{{ telegraf_identifier }}"
 telegraf_data_path: "{{ telegraf_base_path }}/data"
 
-telegraf_systemd_required_services_list: ['docker.service']
+# List of systemd services that the Telegraf systemd service depends on
+telegraf_systemd_required_services_list: "{{ telegraf_systemd_required_services_list_default + telegraf_systemd_required_services_list_auto + telegraf_systemd_required_services_list_custom }}"
+telegraf_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
+telegraf_systemd_required_services_list_auto: []
+telegraf_systemd_required_services_list_custom: []
 
 telegraf_version: 1.30.2
 
