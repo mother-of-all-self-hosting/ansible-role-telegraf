@@ -1,4 +1,6 @@
 # SPDX-FileCopyrightText: 2023 Julian-Samuel Gebühr
+# SPDX-FileCopyrightText: 2023 - 2025 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2025 Suguru Hirahara
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -13,16 +15,16 @@
     group: "{{ telegraf_gid }}"
   with_items:
     - {path: "{{ telegraf_base_path }}", when: true}
-    - {path: "{{ telegraf_config_path }}", when: true}
 
-
-- name: Ensure Telegraf configuration is deployed
+- name: Ensure Telegraf support files installed
   ansible.builtin.template:
-    src: "{{ role_path }}/templates/env.j2"
-    dest: "{{ telegraf_config_path }}/env"
+    src: "{{ role_path }}/templates/{{ item }}.j2"
+    dest: "{{ telegraf_base_path }}/{{ item }}"
+    mode: "0640"
     owner: "{{ telegraf_uid }}"
     group: "{{ telegraf_gid }}"
-    mode: 0640
+  with_items:
+    - env
 
 - name: Ensure Telegraf network is created in Docker
   community.docker.docker_network:

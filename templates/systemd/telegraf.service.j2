@@ -1,5 +1,8 @@
 {#
 SPDX-FileCopyrightText: 2023 Julian-Samuel Gebühr
+SPDX-FileCopyrightText: 2023 Slavi Pantaleev
+SPDX-FileCopyrightText: 2024 Nikita Chernyi
+SPDX-FileCopyrightText: 2025 Suguru Hirahara
 
 SPDX-License-Identifier: AGPL-3.0-or-later
 #}
@@ -25,7 +28,7 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
                 --cap-drop=ALL \
                 --read-only \
                 --network={{ telegraf_container_network }} \
-                --env-file={{ telegraf_env_path }} \
+                --env-file={{ telegraf_base_path }}/env \
                 {{ telegraf_container_image }} --config {{ telegraf_config_link }} {% if telegraf_debug %} --debug {%endif%}
 
 {% for network in telegraf_container_additional_networks %}
