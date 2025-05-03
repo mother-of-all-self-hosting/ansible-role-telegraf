@@ -11,9 +11,7 @@ telegraf_uid: ''
 telegraf_gid: ''
 
 telegraf_base_path: "/{{ telegraf_identifier }}"
-telegraf_config_path: "{{ telegraf_base_path }}/config"
 telegraf_data_path: "{{ telegraf_base_path }}/data"
-telegraf_env_path: "{{ telegraf_config_path }}/env"
 
 telegraf_systemd_required_services_list: ['docker.service']
 
