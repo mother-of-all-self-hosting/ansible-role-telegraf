@@ -4,7 +4,7 @@
 
 ---
 
-- name: Ensure telegraf path exists
+- name: Ensure Telegraf path exists
   ansible.builtin.file:
     path: "{{ item.path }}"
     state: directory
@@ -16,7 +16,7 @@
     - {path: "{{ telegraf_config_path }}", when: true}
 
 
-- name: Ensure telegraf configuration is deployed
+- name: Ensure Telegraf configuration is deployed
   ansible.builtin.template:
     src: "{{ role_path }}/templates/env.j2"
     dest: "{{ telegraf_config_path }}/env"
@@ -24,12 +24,12 @@
     group: "{{ telegraf_gid }}"
     mode: 0640
 
-- name: Ensure telegraf network is created in Docker
+- name: Ensure Telegraf network is created in Docker
   community.docker.docker_network:
     name: "{{ telegraf_container_network }}"
     driver: bridge
 
-- name: Ensure telegraf container image is pulled
+- name: Ensure Telegraf container image is pulled
   community.docker.docker_image:
     name: "{{ telegraf_container_image }}"
     source: "{{ 'pull' if ansible_version.major > 2 or ansible_version.minor > 7 else omit }}"

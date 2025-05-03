@@ -4,12 +4,12 @@ SPDX-FileCopyrightText: 2023 Julian-Samuel Gebühr
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-# telegraf Ansible Role
+# Telegraf Ansible Role
 
-[telegraf](https://www.influxdata.com/) is a self-hosted time-series database. This role helps you to set up telegraf:
+[Telegraf](https://www.influxdata.com/) is a self-hosted time-series database. This role helps you to set up Telegraf:
 
 - with everything run in [Docker](https://www.docker.com/) containers
-- powered by [the official telegraf container image](https://hub.docker.com/r/_/telegraf/)
+- powered by [the official Telegraf container image](https://hub.docker.com/r/_/telegraf/)
 
 ## Prerequisits
 
@@ -18,13 +18,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 ## Installing
 
-To configure and install telegraf on your own server(s), you should use a playbook like [Mother of all self-hosting](https://github.com/mother-of-all-self-hosting/mash-playbook) or write your own.
+To configure and install Telegraf on your own server(s), you should use a playbook like [Mother of all self-hosting](https://github.com/mother-of-all-self-hosting/mash-playbook) or write your own.
 
 ## Configuring this role for your playbook
 
-This role depends on a influxdb configuring telegraf. You need to obtain the influx token and config link in the influxdb.
+This role depends on a influxdb configuring Telegraf. You need to obtain the influx token and config link in the influxdb.
 In your browser, visit the influxdb and go to Load Data -> Telegraf.
-There you need to add a telegraf configuraion. You can now obtain these values from the setup instructions and oaste them here.
+There you need to add a Telegraf configuraion. You can now obtain these values from the setup instructions and oaste them here.
 
 ```yaml
 telegraf_enabled: true
@@ -34,7 +34,7 @@ telegraf_config_link: https://influxdb.example.org/api/v2/telegrafs/01234569
 
 ## Usage
 
-In your influxdb configure the telegraf plugins as you like.
+In your influxdb configure the Telegraf plugins as you like.
 
 ## Support
 

@@ -31,16 +31,16 @@ telegraf_container_network: '{{ telegraf_identifier }}'
 # Use this to expose this container to a reverse proxy, which runs in a different container network and influxdb.
 telegraf_container_additional_networks: []
 
-# The following must be set to enable telegraf to be configured via influxdb
+# The following must be set to enable Telegraf to be configured via influxdb
 # You need to obtain these values in a set-up influxdb via Load Data -> Telegraf
-# then adding a telegraf configuraion. Then you should copy these values from the setup instructions.
+# then adding a Telegraf configuraion. Then you should copy these values from the setup instructions.
 telegraf_influx_token: ''
 telegraf_config_link: ''
 
-# Set true to get a lot more logs on telegraf's behaviour
+# Set true to get a lot more logs on Telegraf's behaviour
 telegraf_debug: false
 
-# Additional environment variables to pass to the telegraf container.
+# Additional environment variables to pass to the Telegraf container.
 # You can use this to further influence the default configuration.
 #
 # Example:
