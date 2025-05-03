@@ -28,11 +28,11 @@ telegraf_container_network: '{{ telegraf_identifier }}'
 
 # A list of additional container networks that the container would be connected to.
 # The role does not create these networks, so make sure they already exist.
-# Use this to expose this container to a reverse proxy, which runs in a different container network and influxdb.
+# Use this to expose this container to a reverse proxy, which runs in a different container network and InfluxDB.
 telegraf_container_additional_networks: []
 
-# The following must be set to enable Telegraf to be configured via influxdb
-# You need to obtain these values in a set-up influxdb via Load Data -> Telegraf
+# The following must be set to enable Telegraf to be configured via InfluxDB
+# You need to obtain these values in a set-up InfluxDB via Load Data -> Telegraf
 # then adding a Telegraf configuraion. Then you should copy these values from the setup instructions.
 telegraf_influx_token: ''
 telegraf_config_link: ''
