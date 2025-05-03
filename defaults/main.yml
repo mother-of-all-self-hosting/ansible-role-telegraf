@@ -24,6 +24,9 @@ telegraf_systemd_required_services_list_default: "{{ [devture_systemd_docker_bas
 telegraf_systemd_required_services_list_auto: []
 telegraf_systemd_required_services_list_custom: []
 
+# List of systemd services that the Telegraf systemd service wants
+telegraf_systemd_wanted_services_list: []
+
 telegraf_version: 1.30.2
 
 telegraf_container_image: "{{ telegraf_container_image_registry_prefix }}library/telegraf:{{ telegraf_container_image_tag }}"
