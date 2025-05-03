@@ -30,8 +30,10 @@ telegraf_systemd_wanted_services_list: []
 telegraf_version: 1.30.2
 
 telegraf_container_image: "{{ telegraf_container_image_registry_prefix }}library/telegraf:{{ telegraf_container_image_tag }}"
-telegraf_container_image_registry_prefix: docker.io/
 telegraf_container_image_tag: "{{ telegraf_version }}"
+telegraf_container_image_registry_prefix: "{{ telegraf_container_image_registry_prefix_upstream }}"
+telegraf_container_image_registry_prefix_upstream: "{{ telegraf_container_image_registry_prefix_upstream_default }}"
+telegraf_container_image_registry_prefix_upstream_default: docker.io/
 telegraf_container_image_force_pull: "{{ telegraf_container_image.endswith(':latest') }}"
 
 telegraf_container_network: '{{ telegraf_identifier }}'
