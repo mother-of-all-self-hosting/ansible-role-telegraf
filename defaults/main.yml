@@ -10,24 +10,15 @@
 ---
 
 telegraf_enabled: true
+
 telegraf_identifier: telegraf
-
-telegraf_uid: ''
-telegraf_gid: ''
-
 telegraf_base_path: "/{{ telegraf_identifier }}"
 telegraf_data_path: "{{ telegraf_base_path }}/data"
 
-# List of systemd services that the Telegraf systemd service depends on
-telegraf_systemd_required_services_list: "{{ telegraf_systemd_required_services_list_default + telegraf_systemd_required_services_list_auto + telegraf_systemd_required_services_list_custom }}"
-telegraf_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
-telegraf_systemd_required_services_list_auto: []
-telegraf_systemd_required_services_list_custom: []
-
-# List of systemd services that the Telegraf systemd service wants
-telegraf_systemd_wanted_services_list: []
-
 telegraf_version: 1.30.2
+
+telegraf_uid: ''
+telegraf_gid: ''
 
 telegraf_container_image: "{{ telegraf_container_image_registry_prefix }}library/telegraf:{{ telegraf_container_image_tag }}"
 telegraf_container_image_tag: "{{ telegraf_version }}"
@@ -43,6 +34,15 @@ telegraf_container_network: '{{ telegraf_identifier }}'
 # The role does not create these networks, so make sure they already exist.
 # Use this to expose this container to a reverse proxy, which runs in a different container network and InfluxDB.
 telegraf_container_additional_networks: []
+
+# List of systemd services that the Telegraf systemd service depends on
+telegraf_systemd_required_services_list: "{{ telegraf_systemd_required_services_list_default + telegraf_systemd_required_services_list_auto + telegraf_systemd_required_services_list_custom }}"
+telegraf_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
+telegraf_systemd_required_services_list_auto: []
+telegraf_systemd_required_services_list_custom: []
+
+# List of systemd services that the Telegraf systemd service wants
+telegraf_systemd_wanted_services_list: []
 
 # The following must be set to enable Telegraf to be configured via InfluxDB
 # You need to obtain these values in a set-up InfluxDB via Load Data -> Telegraf
