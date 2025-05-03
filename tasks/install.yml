@@ -26,13 +26,6 @@
   with_items:
     - env
 
-- name: Ensure Telegraf network is created in Docker
-  community.docker.docker_network:
-    enable_ipv6: "{{ devture_systemd_docker_base_ipv6_enabled }}"
-    name: "{{ telegraf_container_network }}"
-    driver: bridge
-    driver_options: "{{ devture_systemd_docker_base_container_networks_driver_options }}"
-
 - name: Ensure Telegraf container image is pulled
   community.docker.docker_image:
     name: "{{ telegraf_container_image }}"
@@ -40,7 +33,14 @@
     force_source: "{{ telegraf_container_image_force_pull if ansible_version.major > 2 or ansible_version.minor >= 8 else omit }}"
     force: "{{ omit if ansible_version.major > 2 or ansible_version.minor >= 8 else telegraf_container_image_force_pull }}"
 
-- name: Ensure telegraf.service installed
+- name: Ensure Telegraf container network is created
+  community.docker.docker_network:
+    enable_ipv6: "{{ devture_systemd_docker_base_ipv6_enabled }}"
+    name: "{{ telegraf_container_network }}"
+    driver: bridge
+    driver_options: "{{ devture_systemd_docker_base_container_networks_driver_options }}"
+
+- name: Ensure Telegraf systemd service is present
   ansible.builtin.template:
     src: "{{ role_path }}/templates/systemd/telegraf.service.j2"
     dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ telegraf_identifier }}.service"
