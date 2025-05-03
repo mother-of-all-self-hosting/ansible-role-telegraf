@@ -33,7 +33,9 @@ telegraf_container_network: '{{ telegraf_identifier }}'
 # A list of additional container networks that the container would be connected to.
 # The role does not create these networks, so make sure they already exist.
 # Use this to expose this container to a reverse proxy, which runs in a different container network and InfluxDB.
-telegraf_container_additional_networks: []
+telegraf_container_additional_networks: "{{ telegraf_container_additional_networks_auto + telegraf_container_additional_networks_custom }}"
+telegraf_container_additional_networks_auto: []
+telegraf_container_additional_networks_custom: []
 
 # List of systemd services that the Telegraf systemd service depends on
 telegraf_systemd_required_services_list: "{{ telegraf_systemd_required_services_list_default + telegraf_systemd_required_services_list_auto + telegraf_systemd_required_services_list_custom }}"
