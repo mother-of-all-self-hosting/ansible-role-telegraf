@@ -13,7 +13,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 ## Prerequisits
 
-* A installed and running [infuxdb](https://www.influxdata.com/).
+* A installed and running [InfluxDB](https://www.influxdata.com/).
 
 
 ## Installing
