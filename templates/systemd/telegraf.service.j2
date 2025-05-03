@@ -21,15 +21,15 @@ ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_s
 ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ telegraf_identifier }} 2>/dev/null || true'
 
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
-                --rm \
-                --name={{ telegraf_identifier }} \
-                --log-driver=none \
-                --user={{ telegraf_uid }}:{{ telegraf_gid }} \
-                --cap-drop=ALL \
-                --read-only \
-                --network={{ telegraf_container_network }} \
-                --env-file={{ telegraf_base_path }}/env \
-                {{ telegraf_container_image }} --config {{ telegraf_config_link }} {% if telegraf_debug %} --debug {%endif%}
+      --rm \
+      --name={{ telegraf_identifier }} \
+      --log-driver=none \
+      --user={{ telegraf_uid }}:{{ telegraf_gid }} \
+      --cap-drop=ALL \
+      --read-only \
+      --network={{ telegraf_container_network }} \
+      --env-file={{ telegraf_base_path }}/env \
+      {{ telegraf_container_image }} --config {{ telegraf_config_link }} {% if telegraf_debug %} --debug {%endif%}
 
 {% for network in telegraf_container_additional_networks %}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} network connect {{ network }} {{ telegraf_identifier }}
