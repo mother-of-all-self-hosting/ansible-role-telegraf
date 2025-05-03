@@ -39,6 +39,7 @@ ExecStart={{ devture_systemd_docker_base_host_command_docker }} start --attach {
 
 ExecStop=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} kill {{ telegraf_identifier }} 2>/dev/null || true'
 ExecStop=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ telegraf_identifier }} 2>/dev/null || true'
+
 Restart=always
 RestartSec=30
 SyslogIdentifier={{ telegraf_identifier }}
