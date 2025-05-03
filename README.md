@@ -22,8 +22,8 @@ To configure and install Telegraf on your own server(s), you should use a playbo
 
 ## Configuring this role for your playbook
 
-This role depends on a influxdb configuring Telegraf. You need to obtain the influx token and config link in the influxdb.
-In your browser, visit the influxdb and go to Load Data -> Telegraf.
+This role depends on a InfluxDB configuring Telegraf. You need to obtain the influx token and config link in the InfluxDB.
+In your browser, visit the InfluxDB and go to Load Data -> Telegraf.
 There you need to add a Telegraf configuraion. You can now obtain these values from the setup instructions and oaste them here.
 
 ```yaml
@@ -34,7 +34,7 @@ telegraf_config_link: https://influxdb.example.org/api/v2/telegrafs/01234569
 
 ## Usage
 
-In your influxdb configure the Telegraf plugins as you like.
+In your InfluxDB configure the Telegraf plugins as you like.
 
 ## Support
 
