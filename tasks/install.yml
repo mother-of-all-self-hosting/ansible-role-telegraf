@@ -35,6 +35,8 @@
   community.docker.docker_image:
     name: "{{ telegraf_container_image }}"
     source: "{{ 'pull' if ansible_version.major > 2 or ansible_version.minor > 7 else omit }}"
+    force_source: "{{ telegraf_container_image_force_pull if ansible_version.major > 2 or ansible_version.minor >= 8 else omit }}"
+    force: "{{ omit if ansible_version.major > 2 or ansible_version.minor >= 8 else telegraf_container_image_force_pull }}"
 
 - name: Ensure telegraf.service installed
   ansible.builtin.template:
