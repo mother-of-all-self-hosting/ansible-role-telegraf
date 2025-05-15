@@ -8,13 +8,13 @@
 
 - name: Ensure Telegraf path exists
   ansible.builtin.file:
-    path: "{{ item.path }}"
+    path: "{{ item }}"
     state: directory
-    mode: 0700
+    mode: 0750
     owner: "{{ telegraf_uid }}"
     group: "{{ telegraf_gid }}"
   with_items:
-    - {path: "{{ telegraf_base_path }}", when: true}
+    - "{{ telegraf_base_path }}"
 
 - name: Ensure Telegraf support files installed
   ansible.builtin.template:
