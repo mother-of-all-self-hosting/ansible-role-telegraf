@@ -1,4 +1,5 @@
 # SPDX-FileCopyrightText: 2023 Julian-Samuel Gebühr
+# SPDX-FileCopyrightText: 2024 Slavi Pantaleev
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -11,17 +12,19 @@
 
 - when: telegraf_service_stat.stat.exists | bool
   block:
-    - name: Ensure Telegraf service is stopped
+    - name: Ensure Telegraf systemd service is stopped
       ansible.builtin.service:
         name: "{{ telegraf_identifier }}"
         state: stopped
+        enabled: false
         daemon_reload: true
-    - name: Ensure Telegraf service doesn't exist
+
+    - name: Ensure Telegraf systemd service does not exist
       ansible.builtin.file:
-        dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ telegraf_identifier }}.service"
+        path: "{{ devture_systemd_docker_base_systemd_path }}/{{ telegraf_identifier }}.service"
         state: absent
 
-    - name: Ensure Telegraf base path is files deleted (make sure to delete node data)
+    - name: Ensure Telegraf path does not exist
       ansible.builtin.file:
         path: "{{ telegraf_base_path }}"
         state: absent
