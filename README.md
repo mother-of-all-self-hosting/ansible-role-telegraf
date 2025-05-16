@@ -29,7 +29,7 @@ There you need to add a Telegraf configuraion. You can now obtain these values f
 ```yaml
 telegraf_enabled: true
 telegraf_influx_token: SUPERSECRETTOKEN
-telegraf_config_link: https://influxdb.example.org/api/v2/telegrafs/01234569
+telegraf_config_link: https://influxdb.example.com/api/v2/telegrafs/01234569
 ```
 
 ## Usage
