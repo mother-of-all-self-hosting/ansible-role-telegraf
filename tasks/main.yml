@@ -7,13 +7,7 @@
 - block:
     - when: telegraf_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
-  tags:
-    - setup-all
-    - setup-telegraf
-    - install-all
-    - install-telegraf
 
-- block:
     - when: telegraf_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
   tags:
