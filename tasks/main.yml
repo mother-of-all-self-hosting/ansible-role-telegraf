@@ -1,14 +1,18 @@
 # SPDX-FileCopyrightText: 2023 Julian-Samuel Gebühr
+# SPDX-FileCopyrightText: 2023 Slavi Pantaleev
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
 
-- block:
-    - when: telegraf_enabled | bool
+- name: Perform Telegraf installation tasks
+  block:
+    - name: Validate Telegraf configuration
+      when: telegraf_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
 
-    - when: telegraf_enabled | bool
+    - name: Install Telegraf
+      when: telegraf_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
   tags:
     - setup-all
@@ -16,8 +20,10 @@
     - install-all
     - install-telegraf
 
-- block:
-    - when: not telegraf_enabled | bool
+- name: Perform Telegraf uninstallation tasks
+  block:
+    - name: Uninstall Telegraf
+      when: not telegraf_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
   tags:
     - setup-all
