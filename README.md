@@ -11,10 +11,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 - with everything run in [Docker](https://www.docker.com/) containers
 - powered by [the official Telegraf container image](https://hub.docker.com/r/_/telegraf/)
 
-## Prerequisits
+## Prerequisites
 
-* A installed and running [InfluxDB](https://www.influxdata.com/).
-
+- A installed and running [InfluxDB](https://www.influxdata.com/).
 
 ## Installing
 
@@ -24,7 +23,7 @@ To configure and install Telegraf on your own server(s), you should use a playbo
 
 This role depends on a InfluxDB configuring Telegraf. You need to obtain the influx token and config link in the InfluxDB.
 In your browser, visit the InfluxDB and go to Load Data -> Telegraf.
-There you need to add a Telegraf configuraion. You can now obtain these values from the setup instructions and oaste them here.
+There you need to add a Telegraf configuration. You can now obtain these values from the setup instructions and paste them here.
 
 ```yaml
 telegraf_enabled: true
@@ -39,3 +38,9 @@ In your InfluxDB configure the Telegraf plugins as you like.
 ## Support
 
 - Github issues: [mother-of-all-self-hosting/ansible-role-telegraf/issues](https://github.com/mother-of-all-self-hosting/ansible-role-telegraf.git/issues)
+
+## Development
+
+You can optionally install [pre-commit](https://pre-commit.com/) so that simple mistakes are checked and noticed before changes are pushed to a remote branch. See [`.pre-commit-config.yaml`](./.pre-commit-config.yaml) for which hooks are to be executed.
+
+See [this section](https://pre-commit.com/#usage) on the official documentation for usage.

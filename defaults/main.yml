@@ -18,8 +18,8 @@ telegraf_data_path: "{{ telegraf_base_path }}/data"
 # renovate: datasource=docker depName=library/telegraf versioning=semver
 telegraf_version: 1.30.2
 
-telegraf_uid: ''
-telegraf_gid: ''
+telegraf_uid: ""
+telegraf_gid: ""
 
 telegraf_container_image: "{{ telegraf_container_image_registry_prefix }}library/telegraf:{{ telegraf_container_image_tag }}"
 telegraf_container_image_tag: "{{ telegraf_version }}"
@@ -29,7 +29,7 @@ telegraf_container_image_registry_prefix_upstream_default: docker.io/
 telegraf_container_image_force_pull: "{{ telegraf_container_image.endswith(':latest') }}"
 
 # The base container network. It will be auto-created by this role if it doesn't exist already.
-telegraf_container_network: '{{ telegraf_identifier }}'
+telegraf_container_network: "{{ telegraf_identifier }}"
 
 # A list of additional container networks that the container would be connected to.
 # The role does not create these networks, so make sure they already exist.
@@ -49,9 +49,9 @@ telegraf_systemd_wanted_services_list: []
 
 # The following must be set to enable Telegraf to be configured via InfluxDB
 # You need to obtain these values in a set-up InfluxDB via Load Data -> Telegraf
-# then adding a Telegraf configuraion. Then you should copy these values from the setup instructions.
-telegraf_influx_token: ''
-telegraf_config_link: ''
+# then adding a Telegraf configuration. Then you should copy these values from the setup instructions.
+telegraf_influx_token: ""
+telegraf_config_link: ""
 
 # Set true to get a lot more logs on Telegraf's behaviour
 telegraf_debug: false
@@ -63,4 +63,4 @@ telegraf_debug: false
 # telegraf_environment_variables_additional_variables: |
 #   INFLUXD_BOLT_PATH=/root/telegraf.bolt
 #   DOCKER_telegraf_INIT_RETENTION=90d
-telegraf_environment_variables_additional_variables: ''
+telegraf_environment_variables_additional_variables: ""

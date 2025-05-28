@@ -4,13 +4,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-
 - name: Check existence of Telegraf systemd service
   ansible.builtin.stat:
     path: "{{ devture_systemd_docker_base_systemd_path }}/{{ telegraf_identifier }}.service"
   register: telegraf_service_stat
 
-- when: telegraf_service_stat.stat.exists | bool
+- name: Uninstall Telegraf systemd services and files
+  when: telegraf_service_stat.stat.exists | bool
   block:
     - name: Ensure Telegraf systemd service is stopped
       ansible.builtin.service:

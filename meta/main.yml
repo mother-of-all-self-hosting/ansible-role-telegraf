@@ -1,8 +1,9 @@
+---
 galaxy_info:
   role_name: telegraf
   author: Julian-Samuel Gebühr
   company: Hyteck
-  description: Ansible role to install Telegraf, a plugin-driven server agent for collecting & reporting metrics. 
+  description: Ansible role to install Telegraf, a plugin-driven server agent for collecting & reporting metrics.
   platforms:
     - name: Debian
       versions:
@@ -17,4 +18,4 @@ galaxy_info:
       versions:
         - all
   license: AGPL-3.0-or-later
-  min_ansible_version: '2.1'
+  min_ansible_version: "2.1"
