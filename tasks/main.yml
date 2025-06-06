@@ -5,6 +5,7 @@
 
 ---
 - name: Perform Telegraf installation tasks
+  when: telegraf_enabled | bool
   tags:
     - setup-all
     - setup-telegraf
@@ -12,17 +13,15 @@
     - install-telegraf
   block:
     - name: Validate Telegraf configuration
-      when: telegraf_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
     - name: Install Telegraf
-      when: telegraf_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
 
 - name: Perform Telegraf uninstallation tasks
+  when: not telegraf_enabled | bool
   tags:
     - setup-all
     - setup-telegraf
   block:
     - name: Uninstall Telegraf
-      when: not telegraf_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
