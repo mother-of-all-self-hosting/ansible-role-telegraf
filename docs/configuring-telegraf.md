@@ -10,6 +10,7 @@ SPDX-FileCopyrightText: 2022 Julian Foad
 SPDX-FileCopyrightText: 2022 Warren Bailey
 SPDX-FileCopyrightText: 2023 Antonis Christofides
 SPDX-FileCopyrightText: 2023 Felix Stupp
+SPDX-FileCopyrightText: 2023 Julian-Samuel Gebühr
 SPDX-FileCopyrightText: 2023 Pierre 'McFly' Marty
 SPDX-FileCopyrightText: 2024 - 2025 Suguru Hirahara
 
@@ -18,17 +19,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Setting up Telegraf
 
-This is an [Ansible](https://www.ansible.com/) role which installs [Telegraf](https://telegraf.com/) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
+This is an [Ansible](https://www.ansible.com/) role which installs [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
-Telegraf is a free and open-source collaborative wiki and documentation software, designed for seamless real-time collaboration. It can be used to manage a wiki, a knowledge base, project documentation, etc. It has various functions such as granular permissions management system, page history to track changes of articles, etc. It also supports diagramming tools like Draw.io, Excalidraw and Mermaid.
+Telegraf is an open source server agent to help you collect metrics from your stacks, sensors, and systems.
 
-See the project's [documentation](https://telegraf.com/docs/) to learn what Telegraf does and why it might be useful to you.
-
-## Prerequisites
-
-To run a Telegraf instance it is necessary to prepare a [Redis](https://redis.io/) server for managing a metadata database.
-
-If you are looking for an Ansible role for Redis, you can check out [this role (ansible-role-redis)](https://github.com/mother-of-all-self-hosting/ansible-role-redis) maintained by the [Mother-of-All-Self-Hosting (MASH)](https://github.com/mother-of-all-self-hosting) team. Note that the team recommends to have a look at [this role (ansible-role-valkey)](https://github.com/mother-of-all-self-hosting/ansible-role-valkey) for [Valkey](https://valkey.io/) instead.
+See the project's [documentation](https://docs.influxdata.com/telegraf/v1/) to learn what Telegraf does and why it might be useful to you.
 
 ## Adjusting the playbook configuration
 
@@ -52,126 +47,22 @@ telegraf_enabled: true
 ########################################################################
 ```
 
-### Set the hostname
+### Set variables for connectiong to an InfluxDB instance (optional)
 
-To enable the Telegraf instance you need to set the hostname as well. To do so, add the following configuration to your `vars.yml` file. Make sure to replace `example.com` with your own value.
+The Telegraf instance can be configured to collect and write metrics to [InfluxDB](https://www.influxdata.com/) or other outputs.
 
-```yaml
-telegraf_hostname: "example.com"
-```
+>[!NOTE]
+> If you are looking for an Ansible role for InfluxDB, you can check out [this role (ansible-role-influxdb)](https://github.com/mother-of-all-self-hosting/ansible-role-influxdb) maintained by the [Mother-of-All-Self-Hosting (MASH)](https://github.com/mother-of-all-self-hosting) team.
 
-After adjusting the hostname, make sure to adjust your DNS records to point the domain to your server.
-
-**Note**: hosting Telegraf under a subpath (by configuring the `telegraf_path_prefix` variable) does not seem to be possible due to Telegraf's technical limitations.
-
-### Set variables for connecting to a Redis server
-
-As described above, it is necessary to set up a [Redis](https://redis.io/) server for managing a metadata database of a Telegraf instance. You can use either KeyDB or Valkey alternatively.
-
-Having configured it, you need to add and adjust the following configuration to your `vars.yml` file, so that the Telegraf instance will connect to the server:
+You can connect the Telegraf instance with the an InfluxDB instance by adding the following configuration to your `vars.yml` file:
 
 ```yaml
-telegraf_redis_username: ''
-telegraf_redis_password: ''
-telegraf_redis_host: YOUR_REDIS_SERVER_HOSTNAME_HERE
-telegraf_redis_port: 6379
-telegraf_redis_dbnumber: ''
+telegraf_influx_token: YOUR_INFLUXDB_TOKEN_HERE
+
+telegraf_config_link: https://influxdb.example.com/api/v2/telegrafs/0123456789
 ```
 
-Make sure to replace `YOUR_REDIS_SERVER_HOSTNAME_HERE` with the hostname of your Redis server. If the Redis server runs on the same host as Telegraf, set `localhost`.
-
-### Configure a storage backend
-
-The service provides these storage backend options: local filesystem (default) and Amazon S3 compatible object storage.
-
-#### Local filesystem (default)
-
-**By default this role removes uploaded files when uninstalling the service**. In order to make those files persistent, you need to add a Docker volume to mount in the container, so that the directory for storing files is shared with the host machine.
-
-To add the volume, prepare a directory on the host machine and add the following configuration to your `vars.yml` file:
-
-```yaml
-telegraf_data_path: /path/on/the/host
-```
-
-Make sure permissions of the directory specified to `/path/on/the/host`.
-
-#### Amazon S3 compatible object storage
-
-To use Amazon S3 or a S3 compatible object storage, add the following configuration to your `vars.yml` file (adapt to your needs):
-
-```yaml
-telegraf_environment_variable_storage_driver: s3
-
-# Set a S3 access key ID
-telegraf_environment_variable_aws_s3_access_key_id: ''
-
-# Set a S3 secret access key ID
-telegraf_environment_variable_aws_s3_secret_access_key: ''
-
-# Set the the region where your S3 bucket is located
-telegraf_environment_variable_aws_s3_region: ''
-
-# Set a S3 bucket name to use
-telegraf_environment_variable_aws_s3_bucket: ''
-
-# The endpoint URL for your S3 service (optional; set if using a S3 compatible storage like Wasabi and Storj)
-telegraf_environment_variable_aws_s3_endpoint: ''
-
-# Control whether to force path style URLs (https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#s3ForcePathStyle-property) for S3 objects
-telegraf_environment_variable_aws_s3_force_path_style: false
-```
-
-### Configure the mailer
-
-You can configure a mailer for functions such as user invitation. Telegraf supports a SMTP server (default) and Postmark. To set it up, add the following common configuration and settings specific to SMTP server or Postmark to your `vars.yml` file as below (adapt to your needs):
-
-```yaml
-telegraf_mailer_enabled: true
-
-# Set the email address that emails will be sent from
-telegraf_environment_variable_mail_from_address: hello@example.com
-
-# Set the name that emails will be sent from
-telegraf_environment_variable_mail_from_name: telegraf
-```
-
-#### Use SMTP server (default)
-
-To use a SMTP server, add the following configuration to your `vars.yml` file:
-
-```yaml
-# Set the hostname of the SMTP server
-telegraf_environment_variable_smtp_host: 127.0.0.1
-
-# Set the port to use for the SMTP server
-telegraf_environment_variable_smtp_port: 587
-
-# Set the username for the SMTP server
-telegraf_environment_variable_smtp_username: ''
-
-# Set the password for the SMTP server
-telegraf_environment_variable_smtp_password: ''
-
-# Control whether TLS is used when connecting to the server
-telegraf_environment_variable_smtp_secure: false
-
-# Control whether SSL errors are ignored
-telegraf_environment_variable_smtp_ignoretls: false
-```
-
-⚠️ **Note**: without setting an authentication method such as DKIM, SPF, and DMARC for your hostname, emails are most likely to be quarantined as spam at recipient's mail servers. If you have set up a mail server with the [MASH project's exim-relay Ansible role](https://github.com/mother-of-all-self-hosting/ansible-role-exim-relay), you can enable DKIM signing with it. Refer [its documentation](https://github.com/mother-of-all-self-hosting/ansible-role-exim-relay/blob/main/docs/configuring-exim-relay.md#enable-dkim-support-optional) for details.
-
-#### Use Postmark
-
-To use Postmark, add the following configuration to your `vars.yml` file:
-
-```yaml
-telegraf_environment_variable_mail_driver: postmark
-
-# Set the token for Postmark
-telegraf_environment_variable_postmark_token: ''
-```
+Those values can be retrieved from your InfluxDB instance. To retrieve them, open the instance's URL (`https://influxdb.example.com`) and go to **Load Data** -> **Telegraf**.
 
 ### Extending the configuration
 
@@ -181,7 +72,7 @@ Take a look at:
 
 - [`defaults/main.yml`](../defaults/main.yml) for some variables that you can customize via your `vars.yml` file. You can override settings (even those that don't have dedicated playbook variables) using the `telegraf_environment_variables_additional_variables` variable
 
-For a complete list of Telegraf's config options that you could put in `telegraf_environment_variables_additional_variables`, see its [environment variables](https://telegraf.com/docs/self-hosting/environment-variables).
+For a complete list of Telegraf's config options that you could put in `telegraf_environment_variables_additional_variables`, see its [environment variables](https://docs.influxdata.com/telegraf/v1/configuration/#set-environment-variables).
 
 ## Installing
 
@@ -195,9 +86,7 @@ If you use the MASH playbook, the shortcut commands with the [`just` program](ht
 
 ## Usage
 
-After running the command for installation, Telegraf becomes available at the specified hostname like `https://example.com`.
-
-To get started, go to the URL on a web browser and create a first workspace by inputting required information. For an email address, make sure to input your own email address, not the one specified to `telegraf_environment_variable_mail_from_address`.
+After running the command for installation, the Telegraf instance becomes available.
 
 ## Troubleshooting
 
