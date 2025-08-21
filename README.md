@@ -1,43 +1,23 @@
 <!--
 SPDX-FileCopyrightText: 2023 Julian-Samuel Gebühr
+SPDX-FileCopyrightText: 2023 Slavi Pantaleev
+SPDX-FileCopyrightText: 2025 Suguru Hirahara
 
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-# Telegraf Ansible Role
+# Telegraf Ansible role
 
-[Telegraf](https://www.influxdata.com/) is a self-hosted time-series database. This role helps you to set up Telegraf:
+This is an [Ansible](https://www.ansible.com/) role which installs [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
-- with everything run in [Docker](https://www.docker.com/) containers
-- powered by [the official Telegraf container image](https://hub.docker.com/r/_/telegraf/)
+This role *implicitly* depends on:
 
-## Prerequisites
+- [`com.devture.ansible.role.playbook_help`](https://github.com/devture/com.devture.ansible.role.playbook_help)
+- [`com.devture.ansible.role.systemd_docker_base`](https://github.com/devture/com.devture.ansible.role.systemd_docker_base)
 
-- A installed and running [InfluxDB](https://www.influxdata.com/).
+Check [defaults/main.yml](defaults/main.yml) for the full list of supported options.
 
-## Installing
-
-To configure and install Telegraf on your own server(s), you should use a playbook like [Mother of all self-hosting](https://github.com/mother-of-all-self-hosting/mash-playbook) or write your own.
-
-## Configuring this role for your playbook
-
-This role depends on a InfluxDB configuring Telegraf. You need to obtain the influx token and config link in the InfluxDB.
-In your browser, visit the InfluxDB and go to Load Data -> Telegraf.
-There you need to add a Telegraf configuration. You can now obtain these values from the setup instructions and paste them here.
-
-```yaml
-telegraf_enabled: true
-telegraf_influx_token: SUPERSECRETTOKEN
-telegraf_config_link: https://influxdb.example.com/api/v2/telegrafs/01234569
-```
-
-## Usage
-
-In your InfluxDB configure the Telegraf plugins as you like.
-
-## Support
-
-- Github issues: [mother-of-all-self-hosting/ansible-role-telegraf/issues](https://github.com/mother-of-all-self-hosting/ansible-role-telegraf.git/issues)
+💡 See this [document](docs/configuring-telegraf.md) for details about setting up the service with this role.
 
 ## Development
 
