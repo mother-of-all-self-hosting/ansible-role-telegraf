@@ -47,7 +47,7 @@ telegraf_enabled: true
 ########################################################################
 ```
 
-### Set variables for connectiong to an InfluxDB instance (optional)
+### Set variables for connecting to an InfluxDB instance (optional)
 
 The Telegraf instance can be configured to collect and write metrics to [InfluxDB](https://www.influxdata.com/) or other outputs.
 
