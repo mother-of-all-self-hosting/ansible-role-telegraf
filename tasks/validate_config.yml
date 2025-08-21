@@ -22,4 +22,3 @@
   when: "lookup('vars', item, default='') | string | length == 0"
   with_items:
     - telegraf_config_link
-    - telegraf_influx_token
