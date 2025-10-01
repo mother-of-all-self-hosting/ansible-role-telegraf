@@ -16,7 +16,7 @@ telegraf_base_path: "/{{ telegraf_identifier }}"
 telegraf_data_path: "{{ telegraf_base_path }}/data"
 
 # renovate: datasource=docker depName=library/telegraf versioning=semver
-telegraf_version: 1.36.1
+telegraf_version: 1.36.2
 
 telegraf_uid: ""
 telegraf_gid: ""
