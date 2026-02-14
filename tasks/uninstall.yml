@@ -30,6 +30,7 @@
       community.docker.docker_network:
         name: "{{ telegraf_container_network }}"
         state: absent
+      register: telegraf_network_deletion_result
 
     - name: Ensure Telegraf container network does not exist via ansible.builtin.command
       when: devture_systemd_docker_base_container_network_creation_method == 'command'
@@ -37,8 +38,8 @@
         cmd: >-
           {{ devture_systemd_docker_base_host_command_docker }} network rm
           {{ telegraf_container_network }}
-      register: network_deletion_result
-      changed_when: telegraf_container_network in network_deletion_result.stdout
+      register: telegraf_network_deletion_result
+      changed_when: telegraf_container_network in telegraf_network_deletion_result.stdout
 
     - name: Ensure Telegraf path does not exist
       ansible.builtin.file:

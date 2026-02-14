@@ -54,6 +54,7 @@
     name: "{{ telegraf_container_network }}"
     driver: bridge
     driver_options: "{{ devture_systemd_docker_base_container_networks_driver_options }}"
+  register: telegraf_network_creation_result
 
 - name: Ensure Telegraf container network is created via ansible.builtin.command
   when: devture_systemd_docker_base_container_network_creation_method == 'command'
@@ -63,9 +64,9 @@
       {% if devture_systemd_docker_base_ipv6_enabled %}--ipv6{% endif %}
       {{ devture_systemd_docker_base_container_networks_driver_options_string }}
       {{ telegraf_container_network }}
-  register: network_creation_result
-  changed_when: network_creation_result.rc == 0
-  failed_when: network_creation_result.rc != 0 and 'already exists' not in network_creation_result.stderr
+  register: telegraf_network_creation_result
+  changed_when: telegraf_network_creation_result.rc == 0
+  failed_when: telegraf_network_creation_result.rc != 0 and 'already exists' not in telegraf_network_creation_result.stderr
 
 - name: Ensure Telegraf systemd service is present
   ansible.builtin.template:
