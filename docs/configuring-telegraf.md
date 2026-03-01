@@ -66,7 +66,7 @@ Those values can be retrieved from your InfluxDB instance. To retrieve them, ope
 
 ### Extending the configuration
 
-There are some additional things you may wish to configure about the component.
+There are some additional things you may wish to configure about the service.
 
 Take a look at:
 
