@@ -15,6 +15,7 @@
     - { "old": "telegraf_config_path", "new": "<removed>" }
     - { "old": "telegraf_env_path", "new": "<removed>" }
     - { "old": "telegraf_environment_variables_extension", "new": "telegraf_environment_variables_additional_variables" }
+    - { "old": "telegraf_container_image_force_pull", "new": "<removed> (the new community.docker.docker_image_pull module handles this natively)" }
 
 - name: Fail if required Telegraf settings not defined
   ansible.builtin.fail:
