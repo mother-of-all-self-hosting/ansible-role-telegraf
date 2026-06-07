@@ -21,7 +21,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 This is an [Ansible](https://www.ansible.com/) role which installs [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
-Telegraf is an open source server agent to help you collect metrics from your stacks, sensors, and systems.
+Telegraf is an open-source server agent to help you collect metrics from your stacks, sensors, and systems.
 
 See the project's [documentation](https://docs.influxdata.com/telegraf/v1/) to learn what Telegraf does and why it might be useful to you.
 
