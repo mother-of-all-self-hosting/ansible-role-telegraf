@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: 2026 Suguru Hirahara
+# SPDX-FileCopyrightText: 2026 spatterlight
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+---
+- name: Verify Telegraf systemd service
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Wait for Telegraf service to become active (up to 180s)
+      ansible.builtin.systemd:
+        name: telegraf.service
+      register: telegraf_service
+      until: telegraf_service.status.ActiveState == 'active'
+      retries: 36
+      delay: 5
+
+    - name: Assert Telegraf service is active
+      ansible.builtin.assert:
+        that: telegraf_service.status.ActiveState == 'active'
+        fail_msg: "telegraf.service not active ({{ telegraf_service.status.ActiveState }})"
+        success_msg: "telegraf.service is active"
+
+    - name: Retrieve Telegraf service log for debugging
+      when: telegraf_debug_service_enabled | bool
+      ansible.builtin.command:
+        cmd: journalctl -xeu telegraf.service
+      changed_when: false
+
+    - name: Show Telegraf systemd service status summary
+      ansible.builtin.debug:
+        msg:
+          - "Telegraf systemd: {{ telegraf_service.status.ActiveState }}"
