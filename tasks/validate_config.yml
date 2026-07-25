@@ -26,4 +26,3 @@
     - telegraf_uid
     - telegraf_gid
     - telegraf_container_network
-    - telegraf_config_link
