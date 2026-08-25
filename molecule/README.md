@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2018-2025 Slavi Pantaleev
+SPDX-FileCopyrightText: 2018-2026 Slavi Pantaleev
 SPDX-FileCopyrightText: 2019-2022 Aaron Raimist
 SPDX-FileCopyrightText: 2019-2023 MDAD project contributors
 SPDX-FileCopyrightText: 2023 QEDeD
@@ -43,11 +43,15 @@ pip3 install -r ./molecule/requirements.txt
 
 ## Scenarios
 
-Currently there is one testing scenario available.
+There are two testing scenarios available. Both of them go beyond "the systemd service is active", because a Telegraf which cannot use its configuration exits at startup and the `Restart=always` unit merely restart-loops around it. Each scenario hands Telegraf a configuration carrying markers which could not have come from anywhere else, and then waits for metrics carrying those markers to reach the journal — the systemd unit runs `docker start --attach`, so whatever the container writes to stdout is observable there.
 
 ### `default`
 
-Tests a standard Telegraf installation.
+Tests a Telegraf configured with a local configuration file, rendered by the role from `telegraf_configuration` and mounted into the container.
+
+### `config-link`
+
+Tests a Telegraf configured the way the role's documentation describes for InfluxDB: with `telegraf_config_link` pointing at a configuration served over HTTP. A small static file server stands in for the InfluxDB instance, on a container network of its own which the role is asked to connect the Telegraf container to. No configuration file exists on the host in this scenario, so metrics can only be explained by the configuration Telegraf fetched at startup.
 
 ## Running
 

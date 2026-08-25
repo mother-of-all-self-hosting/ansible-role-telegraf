@@ -1,0 +1,92 @@
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+---
+dependency:
+  name: galaxy
+  options:
+    requirements-file: requirements.yml
+    force: true
+driver:
+  name: docker
+platforms:
+  - name: telegraf-${MOLECULE_DISTRO:-ubuntu2604}-config-link
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2604}-ansible:latest"
+    command: ${MOLECULE_DOCKER_COMMAND:-""}
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    cgroupns_mode: host
+    privileged: true
+    pre_build_image: true
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      callback_result_format: yaml
+  inventory:
+    group_vars:
+      all:
+        # Helper variables
+        telegraf_debug_service_enabled: false
+
+        # This scenario configures Telegraf the way the role's documentation describes
+        # for InfluxDB: not with a local file, but with `telegraf_config_link` pointing
+        # at a configuration served over HTTP. prepare.yml stands up a small static file
+        # server standing in for InfluxDB, on a container network of its own which the
+        # role is asked to connect the Telegraf container to.
+        telegraf_molecule_config_server_image: docker.io/library/busybox:1.37.0
+        telegraf_molecule_config_server_identifier: telegraf-molecule-config-server
+        telegraf_molecule_config_server_network: telegraf-molecule-config-server
+        telegraf_molecule_config_server_path: /opt/telegraf-molecule-config-server
+
+        # As in the `default` scenario, but with values of its own, so that a container
+        # or a journal left behind by that scenario cannot satisfy this one.
+        telegraf_molecule_agent_hostname: molecule-telegraf-config-link
+        telegraf_molecule_metric_name: molecule_probe_config_link
+        telegraf_molecule_env_marker: molecule-env-marker-config-link
+
+        # The configuration the file server hands out. Nothing on the Telegraf host
+        # holds a copy of it, so metrics carrying its markers can only come from a
+        # configuration that was fetched over the network at startup.
+        #
+        # Molecule interpolates this file itself before Ansible ever sees it, so every
+        # dollar sign here - in comments too - has to be written doubled. `$${...}`
+        # below is what reaches Ansible, and Telegraf, as a single-dollar reference.
+        telegraf_molecule_served_configuration: |
+          [global_tags]
+            molecule_env_marker = "$${MOLECULE_ENV_MARKER}"
+
+          [agent]
+            interval = "5s"
+            flush_interval = "5s"
+            hostname = "{{ telegraf_molecule_agent_hostname }}"
+            omit_hostname = false
+
+          [[inputs.mem]]
+            name_override = "{{ telegraf_molecule_metric_name }}"
+            fieldinclude = ["used_percent"]
+
+          [[outputs.file]]
+            files = ["stdout"]
+            data_format = "influx"
+
+        # Variables for Telegraf
+        telegraf_uid: 1000
+        telegraf_gid: 1000
+
+        telegraf_config_link: "http://{{ telegraf_molecule_config_server_identifier }}/telegraf.conf"
+
+        # Without this the Telegraf container sits alone on its own network and cannot
+        # resolve the file server at all, so this also exercises the role's support for
+        # attaching the container to networks it does not manage itself.
+        telegraf_container_additional_networks_custom:
+          - "{{ telegraf_molecule_config_server_network }}"
+
+        telegraf_environment_variables_additional_variables: |
+          MOLECULE_ENV_MARKER={{ telegraf_molecule_env_marker }}
+  env:
+    # Workaround for https://github.com/ansible/molecule/issues/4391
+    ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/..:/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:~/.ansible/roles
+verifier:
+  name: ansible

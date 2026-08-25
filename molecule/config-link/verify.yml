@@ -5,22 +5,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-- name: Verify Telegraf
+- name: Verify Telegraf configured over telegraf_config_link
   hosts: all
   become: true
   gather_facts: false
 
   vars:
-    # The prefix of an InfluxDB line-protocol metric that only this scenario's
-    # rendered configuration can produce:
-    #
-    # - the measurement name comes from `name_override` and does not exist in the
-    #   sample configuration baked into the container image
-    # - the `host` tag comes from this scenario's `[agent] hostname`
-    # - the `molecule_env_marker` tag can only be resolved from the environment file
-    #   the role renders (an unresolved `${...}` reference is emitted literally)
-    #
-    # Tags are emitted in alphabetical order by Telegraf's influx serializer.
+    # Only a configuration fetched from the file server can produce this: the
+    # measurement name and the `host` tag exist nowhere on the Telegraf host, and the
+    # `molecule_env_marker` tag additionally has to be resolved from the environment
+    # file the role renders locally. Tags are emitted in alphabetical order.
     telegraf_molecule_expected_metric: >-
       {{ telegraf_molecule_metric_name }},host={{ telegraf_molecule_agent_hostname }},molecule_env_marker={{ telegraf_molecule_env_marker }} used_percent=
 
@@ -52,33 +46,19 @@
         cmd: journalctl -xeu telegraf.service
       changed_when: false
 
-    - name: Read the Telegraf configuration file rendered by the role
-      ansible.builtin.slurp:
-        src: /telegraf/telegraf.conf
-      register: telegraf_rendered_configuration
+    - name: Check whether a local Telegraf configuration file exists
+      ansible.builtin.stat:
+        path: /telegraf/telegraf.conf
+      register: telegraf_local_configuration
 
-    - name: Assert the rendered configuration file is the one this scenario asked for
-      vars:
-        telegraf_rendered_configuration_content: "{{ telegraf_rendered_configuration.content | b64decode }}"
+    - name: Assert no local configuration file exists
       ansible.builtin.assert:
         that:
-          - "'name_override = \"' ~ telegraf_molecule_metric_name ~ '\"' in telegraf_rendered_configuration_content"
-          - "'hostname = \"' ~ telegraf_molecule_agent_hostname ~ '\"' in telegraf_rendered_configuration_content"
-          - "'${MOLECULE_ENV_MARKER}' in telegraf_rendered_configuration_content"
-        fail_msg: "/telegraf/telegraf.conf does not carry what telegraf_configuration asked for"
-        success_msg: "/telegraf/telegraf.conf carries what telegraf_configuration asked for"
-
-    - name: Read the environment file rendered by the role
-      ansible.builtin.slurp:
-        src: /telegraf/env
-      register: telegraf_rendered_env
-
-    - name: Assert the environment file carries the additional variables
-      ansible.builtin.assert:
-        that:
-          - "'MOLECULE_ENV_MARKER=' ~ telegraf_molecule_env_marker in (telegraf_rendered_env.content | b64decode)"
-        fail_msg: "/telegraf/env does not carry telegraf_environment_variables_additional_variables"
-        success_msg: "/telegraf/env carries telegraf_environment_variables_additional_variables"
+          - not telegraf_local_configuration.stat.exists
+        fail_msg: >-
+          /telegraf/telegraf.conf exists, so metrics could be explained by a local
+          configuration rather than by the one served over telegraf_config_link
+        success_msg: "No local configuration file exists; the configuration can only come from telegraf_config_link"
 
     - name: Inspect the Telegraf container
       ansible.builtin.command:
@@ -86,7 +66,7 @@
       register: telegraf_container_inspect
       changed_when: false
 
-    - name: Assert the container runs the pinned image with the expected arguments
+    - name: Assert the container runs the pinned image, configured from the link
       vars:
         telegraf_container: "{{ telegraf_container_inspect.stdout | from_json | first }}"
       ansible.builtin.assert:
@@ -94,13 +74,16 @@
           - telegraf_container.State.Running | bool
           # The version Renovate bumps, on the container that is actually running.
           - telegraf_container.Config.Image == 'docker.io/library/telegraf:' ~ telegraf_role_defaults.telegraf_version
-          # Exactly one `--config`, pointing at the mounted file. An empty or missing
-          # argument here makes Telegraf refuse to start ("flag needs an argument").
-          - telegraf_container.Config.Cmd == ['--config', '/etc/telegraf/telegraf.conf']
-          - telegraf_container.HostConfig.ReadonlyRootfs | bool
-          - telegraf_container.Mounts | selectattr('Destination', 'equalto', '/etc/telegraf/telegraf.conf') | selectattr('RW', 'equalto', false) | list | length == 1
+          # Exactly one `--config`, carrying the link. An empty or missing argument
+          # here makes Telegraf refuse to start ("flag needs an argument").
+          - telegraf_container.Config.Cmd == ['--config', telegraf_config_link]
+          - telegraf_container.Mounts | selectattr('Destination', 'equalto', '/etc/telegraf/telegraf.conf') | list | length == 0
+          # telegraf_container_additional_networks_custom put it on the file server's
+          # network in addition to the one the role manages. That one is named after
+          # `telegraf_identifier`, which this scenario leaves at its default.
+          - telegraf_container.NetworkSettings.Networks.keys() | list | sort == [telegraf_molecule_config_server_network, 'telegraf'] | sort
         fail_msg: "The Telegraf container is not what the role's systemd unit describes"
-        success_msg: "The Telegraf container runs the pinned image with the expected arguments"
+        success_msg: "The Telegraf container runs the pinned image, configured from telegraf_config_link"
 
     - name: Wait for Telegraf to report itself started and to emit metrics (up to 180s)
       ansible.builtin.command:
@@ -113,17 +96,17 @@
       retries: 36
       delay: 5
 
-    - name: Assert Telegraf loaded the role's configuration and runs the pinned version
+    - name: Assert Telegraf fetched its configuration from the link and runs the pinned version
       ansible.builtin.assert:
         that:
-          - "'Loading config: /etc/telegraf/telegraf.conf' in telegraf_journal.stdout"
+          - "'Loading config: ' ~ telegraf_config_link in telegraf_journal.stdout"
           # The running process's own idea of its version, against the leaf literal
           # that Renovate bumps. The trailing space keeps 1.39.3 from matching 1.39.30.
           - "'Starting Telegraf ' ~ telegraf_role_defaults.telegraf_version ~ ' ' in telegraf_journal.stdout"
-        fail_msg: "Telegraf did not load the role's configuration, or does not run version {{ telegraf_role_defaults.telegraf_version }}"
-        success_msg: "Telegraf {{ telegraf_role_defaults.telegraf_version }} loaded the role's configuration"
+        fail_msg: "Telegraf did not load {{ telegraf_config_link }}, or does not run version {{ telegraf_role_defaults.telegraf_version }}"
+        success_msg: "Telegraf {{ telegraf_role_defaults.telegraf_version }} loaded its configuration from {{ telegraf_config_link }}"
 
-    - name: Assert Telegraf emitted metrics that only the role's configuration could produce
+    - name: Assert Telegraf emitted metrics that only the served configuration could produce
       ansible.builtin.assert:
         that:
           - telegraf_journal.stdout.count(telegraf_molecule_expected_metric) >= 2
@@ -134,4 +117,5 @@
       ansible.builtin.debug:
         msg:
           - "Telegraf systemd: {{ telegraf_service.status.ActiveState }}"
+          - "Configuration source: {{ telegraf_config_link }}"
           - "Metrics observed: {{ telegraf_journal.stdout.count(telegraf_molecule_expected_metric) }}"

@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2026 spatterlight
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
 #
@@ -31,9 +32,55 @@ provisioner:
         # Helper variables
         telegraf_debug_service_enabled: false
 
+        # The scenario-specific hostname that this scenario's `[agent]` section pins.
+        # It travels with every metric as the `host` tag, so a container left over
+        # from another scenario cannot make this scenario's assertions pass.
+        telegraf_molecule_agent_hostname: molecule-telegraf-default
+
+        # A metric name which does not exist in Telegraf's stock sample configuration,
+        # so finding it proves the configuration the role rendered is the one loaded.
+        telegraf_molecule_metric_name: molecule_probe_default
+
+        # A value that can only reach the running Telegraf process through the
+        # environment file the role renders. It is referenced from the configuration
+        # as an environment variable, and an unresolved reference is passed through to
+        # the output literally rather than failing, which is what makes an assertion
+        # on it capable of failing.
+        telegraf_molecule_env_marker: molecule-env-marker-default
+
         # Variables for Telegraf
         telegraf_uid: 1000
         telegraf_gid: 1000
+
+        # Exercises the role's escape hatch for extra environment variables;
+        # verify.yml asserts that this value reaches the metrics Telegraf emits.
+        telegraf_environment_variables_additional_variables: |
+          MOLECULE_ENV_MARKER={{ telegraf_molecule_env_marker }}
+
+        # Molecule interpolates this file itself before Ansible ever sees it, so every
+        # dollar sign here - in comments too - has to be written doubled. `$${...}`
+        # below is what reaches Ansible, and Telegraf, as a single-dollar reference.
+        #
+        # `outputs.file` writing to stdout is what makes this scenario observable:
+        # the systemd unit runs `docker start --attach`, so whatever the container
+        # prints ends up in the journal under the `telegraf` unit.
+        telegraf_configuration: |
+          [global_tags]
+            molecule_env_marker = "$${MOLECULE_ENV_MARKER}"
+
+          [agent]
+            interval = "5s"
+            flush_interval = "5s"
+            hostname = "{{ telegraf_molecule_agent_hostname }}"
+            omit_hostname = false
+
+          [[inputs.mem]]
+            name_override = "{{ telegraf_molecule_metric_name }}"
+            fieldinclude = ["used_percent"]
+
+          [[outputs.file]]
+            files = ["stdout"]
+            data_format = "influx"
   env:
     # Workaround for https://github.com/ansible/molecule/issues/4391
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/..:/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:~/.ansible/roles

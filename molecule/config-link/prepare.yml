@@ -1,0 +1,101 @@
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2026 spatterlight
+# SPDX-FileCopyrightText: 2026 Suguru Hirahara
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+---
+- name: Prepare Telegraf Molecule tests
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Ensure apt cache is updated for Telegraf Molecule tests preparation
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 600
+      when: ansible_facts["os_family"] == 'Debian'
+
+    - name: Ensure required packages are installed for Telegraf Molecule tests preparation
+      ansible.builtin.package:
+        name:
+          - python3-requests
+        state: present
+
+    - name: Ensure Docker is installed for Telegraf Molecule tests preparation
+      ansible.builtin.include_role:
+        name: ansible-role-docker
+      vars:
+        docker_daemon_options:
+          storage-driver: vfs
+
+# Stands in for the InfluxDB instance that `telegraf_config_link` normally points at:
+# a static file server handing out a Telegraf configuration over HTTP. It has to be
+# reachable from the Telegraf container, which the role only puts on its own network,
+# so it lives on a network of its own that the scenario asks the role to also connect
+# the Telegraf container to.
+- name: Prepare the Telegraf configuration file server
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Ensure the configuration file server directory exists
+      ansible.builtin.file:
+        path: "{{ telegraf_molecule_config_server_path }}"
+        state: directory
+        mode: "0755"
+
+    - name: Ensure the configuration to be served exists
+      ansible.builtin.copy:
+        content: "{{ telegraf_molecule_served_configuration }}"
+        dest: "{{ telegraf_molecule_config_server_path }}/telegraf.conf"
+        mode: "0644"
+
+    - name: Ensure the configuration file server container image is pulled
+      ansible.builtin.command:
+        cmd: "docker pull {{ telegraf_molecule_config_server_image }}"
+      register: telegraf_molecule_config_server_image_pull
+      changed_when: "'Downloaded newer image' in telegraf_molecule_config_server_image_pull.stdout"
+      retries: 5
+      delay: 10
+      until: telegraf_molecule_config_server_image_pull is not failed
+
+    - name: Ensure the configuration file server network exists
+      ansible.builtin.command:
+        cmd: "docker network create {{ telegraf_molecule_config_server_network }}"
+      register: telegraf_molecule_config_server_network_creation
+      changed_when: telegraf_molecule_config_server_network_creation.rc == 0
+      failed_when: >-
+        telegraf_molecule_config_server_network_creation.rc != 0
+        and 'already exists' not in telegraf_molecule_config_server_network_creation.stderr
+
+    - name: Ensure the configuration file server is running
+      ansible.builtin.command:
+        cmd: >-
+          docker run --detach
+          --name={{ telegraf_molecule_config_server_identifier }}
+          --network={{ telegraf_molecule_config_server_network }}
+          --read-only
+          --mount type=bind,src={{ telegraf_molecule_config_server_path }},dst=/srv,ro
+          {{ telegraf_molecule_config_server_image }}
+          httpd -f -p 80 -h /srv
+      register: telegraf_molecule_config_server_run
+      changed_when: telegraf_molecule_config_server_run.rc == 0
+      failed_when: >-
+        telegraf_molecule_config_server_run.rc != 0
+        and 'is already in use' not in telegraf_molecule_config_server_run.stderr
+
+    # If the file server is not actually serving, Telegraf's failure later on would
+    # look like a role bug rather than a broken test fixture.
+    - name: Wait for the configuration file server to serve the configuration
+      ansible.builtin.command:
+        cmd: >-
+          docker run --rm
+          --network={{ telegraf_molecule_config_server_network }}
+          {{ telegraf_molecule_config_server_image }}
+          wget -q -O - http://{{ telegraf_molecule_config_server_identifier }}/telegraf.conf
+      register: telegraf_molecule_config_server_probe
+      changed_when: false
+      until: telegraf_molecule_metric_name in telegraf_molecule_config_server_probe.stdout
+      retries: 12
+      delay: 5
