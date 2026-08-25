@@ -1,6 +1,6 @@
 {#
 SPDX-FileCopyrightText: 2023 Julian-Samuel Gebühr
-SPDX-FileCopyrightText: 2023 Slavi Pantaleev
+SPDX-FileCopyrightText: 2023, 2026 Slavi Pantaleev
 SPDX-FileCopyrightText: 2024 Nikita Chernyi
 SPDX-FileCopyrightText: 2025 Suguru Hirahara
 
@@ -31,10 +31,13 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       --read-only \
       --network={{ telegraf_container_network }} \
       --env-file={{ telegraf_base_path }}/env \
+      {% if telegraf_configuration | trim | length > 0 %}
+      --mount type=bind,src={{ telegraf_base_path }}/telegraf.conf,dst={{ telegraf_configuration_container_path }},ro \
+      {% endif %}
       {% for arg in telegraf_container_extra_arguments %}
       {{ arg }} \
       {% endfor %}
-      {{ telegraf_container_image }} --config {{ telegraf_config_link }} {% if telegraf_debug %} --debug {%endif%}
+      {{ telegraf_container_image }}{% if telegraf_configuration | trim | length > 0 %} --config {{ telegraf_configuration_container_path }}{% endif %}{% if telegraf_config_link | trim | length > 0 %} --config {{ telegraf_config_link }}{% endif %}{% if telegraf_debug %} --debug{% endif %}
 
 {% for network in telegraf_container_additional_networks %}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} network connect {{ network }} {{ telegraf_identifier }}

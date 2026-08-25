@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2023 Julian-Samuel Gebühr
-# SPDX-FileCopyrightText: 2023 - 2025 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2023 - 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2025 Suguru Hirahara
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
@@ -22,9 +22,15 @@
     mode: "0640"
     owner: "{{ telegraf_uid }}"
     group: "{{ telegraf_gid }}"
-  with_items:
-    - env
+  with_items: "{{ ['env'] + (['telegraf.conf'] if telegraf_configuration | trim | length > 0 else []) }}"
   register: telegraf_support_files_result
+
+- name: Ensure Telegraf configuration file is removed when not in use
+  when: telegraf_configuration | trim | length == 0
+  ansible.builtin.file:
+    path: "{{ telegraf_base_path }}/telegraf.conf"
+    state: absent
+  register: telegraf_configuration_file_removal_result
 
 - name: Ensure Telegraf container image is pulled via community.docker.docker_image_pull
   when: devture_systemd_docker_base_container_image_pull_method == 'ansible-module'
@@ -79,6 +85,7 @@
     telegraf_restart_necessary: >-
       {{
         telegraf_support_files_result.changed | default(false)
+        or telegraf_configuration_file_removal_result.changed | default(false)
         or telegraf_systemd_service_result.changed | default(false)
         or telegraf_container_image_pull_result_ansible_module.changed | default(false)
         or telegraf_container_image_pull_result_command.changed | default(false)

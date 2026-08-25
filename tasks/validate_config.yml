@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2023 Julian-Samuel Gebühr
-# SPDX-FileCopyrightText: 2023 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2023, 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
@@ -26,3 +26,17 @@
     - telegraf_uid
     - telegraf_gid
     - telegraf_container_network
+    - telegraf_configuration_container_path
+
+# Telegraf exits at startup unless it is given a configuration which defines at least
+# one output. Because the systemd service is `Restart=always`, an unconfigured instance
+# does not fail visibly - it restart-loops forever - so this is caught here instead.
+- name: Fail if Telegraf has no configuration to run with
+  when: "telegraf_configuration | trim | length == 0 and telegraf_config_link | trim | length == 0"
+  ansible.builtin.fail:
+    msg: >-
+      Telegraf has not been given a configuration to run with.
+      Define `telegraf_configuration` with the contents of a `telegraf.conf` file,
+      and/or point `telegraf_config_link` at a remotely-hosted configuration
+      (e.g. one served by an InfluxDB instance).
+      Without either of them, Telegraf exits at startup and its systemd service restart-loops.

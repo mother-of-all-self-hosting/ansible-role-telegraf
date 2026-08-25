@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2020 - 2024 MDAD project contributors
-SPDX-FileCopyrightText: 2020 - 2024 Slavi Pantaleev
+SPDX-FileCopyrightText: 2020 - 2026 Slavi Pantaleev
 SPDX-FileCopyrightText: 2020 Aaron Raimist
 SPDX-FileCopyrightText: 2020 Chris van Dijk
 SPDX-FileCopyrightText: 2020 Dominik Zajac
@@ -40,12 +40,42 @@ To enable Telegraf with this role, add the following configuration to your `vars
 
 telegraf_enabled: true
 
+telegraf_configuration: |
+  [agent]
+    interval = "10s"
+    flush_interval = "10s"
+
+  [[inputs.cpu]]
+    percpu = false
+    totalcpu = true
+
+  [[inputs.mem]]
+
+  [[outputs.file]]
+    files = ["stdout"]
+    data_format = "influx"
+
 ########################################################################
 #                                                                      #
 # /telegraf                                                            #
 #                                                                      #
 ########################################################################
 ```
+
+## Configuring what Telegraf collects and where it writes it
+
+Telegraf refuses to start unless it is given a configuration which defines at least one output plugin, so this role requires you to configure it in one of the two ways described below. They may also be combined, in which case Telegraf merges the configurations. If you configure neither, the role stops with an error rather than installing a service which would restart-loop.
+
+### Providing the configuration file yourself
+
+Set `telegraf_configuration` to the full contents of a [Telegraf configuration file](https://docs.influxdata.com/telegraf/v1/configuration/) (TOML), as in the example above. The role renders it to `/telegraf/telegraf.conf` on the host and mounts it read-only into the container at `/etc/telegraf/telegraf.conf`, replacing the sample configuration which ships in the container image.
+
+The value is passed through to Telegraf verbatim — the role does not merge anything into it, and there is deliberately no separate "extension" variable to append to it. Telegraf's configuration is TOML made out of `[[inputs.x]]`-style array-of-table sections, in which a key appended after the end of the file silently lands in whichever section happens to come last, so appending to it is not a safe thing for a role to offer.
+
+Values from the container's environment can be referenced from the configuration as `${VARIABLE_NAME}`. `telegraf_influx_token` is passed in as `INFLUX_TOKEN`, and anything set through `telegraf_environment_variables_additional_variables` is available too.
+
+>[!NOTE]
+> Since Telegraf v1.38.0, an unknown plugin name or an unknown option on a known plugin is a hard error rather than a warning, and Telegraf exits at startup instead of carrying on. If the service does not come up after a configuration change, `journalctl -fu telegraf` reports exactly which option it rejected.
 
 ### Set variables for connecting to an InfluxDB instance (optional)
 
@@ -64,7 +94,7 @@ telegraf_config_link: https://influxdb.example.com/api/v2/telegrafs/0123456789
 
 Those values can be retrieved from your InfluxDB instance. To retrieve them, open the instance's URL (`https://influxdb.example.com`) and go to **Load Data** -> **Telegraf**.
 
-### Extending the configuration
+## Extending the configuration
 
 There are some additional things you may wish to configure about the service.
 

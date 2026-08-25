@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2023 Julian-Samuel Gebühr
 # SPDX-FileCopyrightText: 2023 - 2024 Nikita Chernyi
-# SPDX-FileCopyrightText: 2023 - 2025 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2023 - 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2024 Sergio Durigan Junior
 # SPDX-FileCopyrightText: 2025 MASH project contributors
 # SPDX-FileCopyrightText: 2025 Suguru Hirahara
@@ -90,6 +90,42 @@ telegraf_container_cleanup_command: |
 
 # Specify the timezone
 telegraf_environment_variables_tz: UTC
+
+# Telegraf refuses to start unless it is given a configuration which defines at least
+# one output, so this role requires one of the two mechanisms below to be used.
+# Both may be combined, in which case Telegraf merges the configurations
+# (its `--config` flag is repeatable).
+
+# The contents of the Telegraf configuration file (TOML). When non-empty, the role
+# renders it to `{{ telegraf_base_path }}/telegraf.conf` and mounts it into the
+# container read-only at `{{ telegraf_configuration_container_path }}`.
+#
+# The value is passed to Telegraf verbatim, so it is the whole configuration file -
+# the role does not merge anything into it. Because Telegraf's configuration is TOML
+# built out of `[[inputs.x]]`-style array-of-table sections, where a stray key lands
+# in whichever section precedes it, there is deliberately no separate "extension"
+# variable to append to it.
+#
+# See https://docs.influxdata.com/telegraf/v1/configuration/
+#
+# Example:
+# telegraf_configuration: |
+#   [agent]
+#     interval = "10s"
+#
+#   [[inputs.cpu]]
+#
+#   [[outputs.influxdb_v2]]
+#     urls = ["http://influxdb:8086"]
+#     token = "${INFLUX_TOKEN}"
+#     organization = "example"
+#     bucket = "telegraf"
+telegraf_configuration: ""
+
+# The path that the rendered configuration file (see `telegraf_configuration`) is
+# mounted at inside the container. This is also the path Telegraf reads by default,
+# so the rendered file replaces the sample configuration baked into the container image.
+telegraf_configuration_container_path: /etc/telegraf/telegraf.conf
 
 # The following must be set to enable Telegraf to be configured via InfluxDB
 # You need to obtain these values in a set-up InfluxDB via Load Data -> Telegraf
