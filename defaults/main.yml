@@ -137,12 +137,16 @@ telegraf_config_link: ""
 telegraf_debug: false
 
 # Additional environment variables to pass to the Telegraf container.
-# You can use this to further influence the default configuration.
+#
+# Telegraf is not configured through environment variables - its settings live in
+# the configuration file. What these are for is being referenced from that file as
+# `${VARIABLE_NAME}`, which is how secrets stay out of it, and how the `HOST_*`
+# variables that redirect the system inputs at a mounted host filesystem are set.
 #
 # Example:
 # telegraf_environment_variables_additional_variables: |
-#   INFLUXD_BOLT_PATH=/root/telegraf.bolt
-#   DOCKER_telegraf_INIT_RETENTION=90d
+#   INFLUXDB_BUCKET=telegraf
+#   HOST_PROC=/hostfs/proc
 telegraf_environment_variables_additional_variables: ""
 
 # telegraf_restart_necessary controls whether the Telegraf systemd

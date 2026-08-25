@@ -94,15 +94,34 @@ telegraf_config_link: https://influxdb.example.com/api/v2/telegrafs/0123456789
 
 Those values can be retrieved from your InfluxDB instance. To retrieve them, open the instance's URL (`https://influxdb.example.com`) and go to **Load Data** -> **Telegraf**.
 
+### Collecting metrics about the host
+
+The role runs Telegraf in a container with no access to the host beyond what a container normally gets: no `/proc` or `/sys` from the host, no Docker socket, and no `--pid=host`. The `[[inputs.cpu]]`, `[[inputs.mem]]` and similar plugins therefore report what the container can see, which for some of them (`[[inputs.disk]]` in particular) is not the host at all.
+
+This is a deliberate default — an agent that can read the whole host and talk to the Docker socket is a large amount of privilege to hand to something whose job is to make network calls — so widening it is left to you. Telegraf reads the `HOST_PROC`, `HOST_SYS`, `HOST_ETC`, `HOST_VAR`, `HOST_RUN` and `HOST_MOUNT_PREFIX` environment variables to find a mounted host filesystem, so mounting one and pointing Telegraf at it looks like this:
+
+```yaml
+telegraf_container_extra_arguments_custom:
+  - "--mount type=bind,src=/,dst=/hostfs,ro,bind-propagation=rslave"
+
+telegraf_environment_variables_additional_variables: |
+  HOST_MOUNT_PREFIX=/hostfs
+  HOST_PROC=/hostfs/proc
+  HOST_SYS=/hostfs/sys
+  HOST_ETC=/hostfs/etc
+```
+
+Give the container only what the inputs you enable actually need. Plugins such as `[[inputs.ping]]` additionally need capabilities the role drops (`--cap-add=NET_RAW`), and `[[inputs.docker]]` needs the Docker socket mounted, which is equivalent to giving Telegraf root on the host.
+
 ## Extending the configuration
 
 There are some additional things you may wish to configure about the service.
 
 Take a look at:
 
-- [`defaults/main.yml`](../defaults/main.yml) for some variables that you can customize via your `vars.yml` file. You can override settings (even those that don't have dedicated playbook variables) using the `telegraf_environment_variables_additional_variables` variable
+- [`defaults/main.yml`](../defaults/main.yml) for some variables that you can customize via your `vars.yml` file
 
-For a complete list of Telegraf's config options that you could put in `telegraf_environment_variables_additional_variables`, see its [environment variables](https://docs.influxdata.com/telegraf/v1/configuration/#set-environment-variables).
+Note that Telegraf itself is not configured through environment variables — its settings live in the configuration file. What `telegraf_environment_variables_additional_variables` is for is supplying values that the configuration file then [references as `${VARIABLE_NAME}`](https://docs.influxdata.com/telegraf/v1/configuration/#set-environment-variables), which is how secrets stay out of it.
 
 ## Installing
 

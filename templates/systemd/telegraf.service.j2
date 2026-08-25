@@ -8,7 +8,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 #}
 
 [Unit]
-Description=Telegraf time-series database ({{ telegraf_identifier }})
+Description=Telegraf metrics collection agent ({{ telegraf_identifier }})
 {% for service in telegraf_systemd_required_services_list %}
 Requires={{ service }}
 After={{ service }}
