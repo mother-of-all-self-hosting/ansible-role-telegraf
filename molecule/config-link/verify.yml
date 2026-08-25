@@ -62,7 +62,7 @@
 
     - name: Inspect the Telegraf container
       ansible.builtin.command:
-        cmd: docker inspect telegraf
+        cmd: docker container inspect telegraf
       register: telegraf_container_inspect
       changed_when: false
 
