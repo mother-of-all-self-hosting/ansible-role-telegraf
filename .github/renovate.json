@@ -10,7 +10,7 @@
     "On the annotation in defaults/main.yml: `versioning=semver` is load-bearing. `library/telegraf` publishes a flavoured `1.39.3-alpine` alongside every release, plus truncated tags (`1.39`, `1.38`, `1`) and channel tags (`latest`, `alpine`). Under `semver` the flavoured tags read as prereleases and the rest are not valid versions at all, so only the full `X.Y.Z` tags remain as candidates - which is the intent. The role pulls one image and one tag, so there is no possibility of Renovate proposing a version that only some of the images it pulls have been published under, and no `extractVersion` is needed."
   ],
   "extends": [
-    "github>mother-of-all-self-hosting/renovate-config#v1.0.0",
-    "github>mother-of-all-self-hosting/renovate-config//patch-automerge#v1.0.0"
+    "github>mother-of-all-self-hosting/renovate-config#v1.1.0",
+    "github>mother-of-all-self-hosting/renovate-config//patch-automerge#v1.1.0"
   ]
 }
