@@ -19,12 +19,13 @@
       {{ telegraf_molecule_metric_name }},host={{ telegraf_molecule_agent_hostname }},molecule_env_marker={{ telegraf_molecule_env_marker }} used_percent=
 
   tasks:
-    # Only leaf literals may be read from here. Scenario-tuned values live in the
-    # scenario's group_vars and would be shadowed by these role-wide defaults.
-    - name: Read the role's defaults for Telegraf
+    # The role is not included in this playbook, so its defaults are not in
+    # scope. Reading defaults/main.yml directly ties the version assertion
+    # below.
+    - name: Load the role defaults
       ansible.builtin.include_vars:
-        file: "{{ lookup('ansible.builtin.env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
-        name: telegraf_role_defaults
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
+        name: telegraf_defaults
 
     - name: Wait for Telegraf service to become active (up to 180s)
       ansible.builtin.systemd:
@@ -73,7 +74,7 @@
         that:
           - telegraf_container.State.Running | bool
           # The version Renovate bumps, on the container that is actually running.
-          - telegraf_container.Config.Image == 'docker.io/library/telegraf:' ~ telegraf_role_defaults.telegraf_version
+          - telegraf_container.Config.Image == 'docker.io/library/telegraf:' ~ telegraf_defaults.telegraf_version
           # Exactly one `--config`, carrying the link. An empty or missing argument
           # here makes Telegraf refuse to start ("flag needs an argument").
           - telegraf_container.Config.Cmd == ['--config', telegraf_config_link]
@@ -102,9 +103,9 @@
           - "'Loading config: ' ~ telegraf_config_link in telegraf_journal.stdout"
           # The running process's own idea of its version, against the leaf literal
           # that Renovate bumps. The trailing space keeps 1.39.3 from matching 1.39.30.
-          - "'Starting Telegraf ' ~ telegraf_role_defaults.telegraf_version ~ ' ' in telegraf_journal.stdout"
-        fail_msg: "Telegraf did not load {{ telegraf_config_link }}, or does not run version {{ telegraf_role_defaults.telegraf_version }}"
-        success_msg: "Telegraf {{ telegraf_role_defaults.telegraf_version }} loaded its configuration from {{ telegraf_config_link }}"
+          - "'Starting Telegraf ' ~ telegraf_defaults.telegraf_version ~ ' ' in telegraf_journal.stdout"
+        fail_msg: "Telegraf did not load {{ telegraf_config_link }}, or does not run version {{ telegraf_defaults.telegraf_version }}"
+        success_msg: "Telegraf {{ telegraf_defaults.telegraf_version }} loaded its configuration from {{ telegraf_config_link }}"
 
     - name: Assert Telegraf emitted metrics that only the served configuration could produce
       ansible.builtin.assert:
