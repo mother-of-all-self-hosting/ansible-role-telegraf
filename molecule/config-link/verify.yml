@@ -113,9 +113,9 @@
         fail_msg: "No metric matching '{{ telegraf_molecule_expected_metric }}' reached the journal"
         success_msg: "Telegraf collected and wrote out metrics carrying this scenario's markers"
 
-    - name: Show Telegraf systemd service status summary
+    - name: Show the Telegraf verification summary
       ansible.builtin.debug:
         msg:
           - "Telegraf systemd: {{ telegraf_service.status.ActiveState }}"
-          - "Configuration source: {{ telegraf_config_link }}"
-          - "Metrics observed: {{ telegraf_journal.stdout.count(telegraf_molecule_expected_metric) }}"
+          - "Telegraf configuration source: {{ telegraf_config_link }}"
+          - "Telegraf metrics observed: {{ telegraf_journal.stdout.count(telegraf_molecule_expected_metric) }}"
