@@ -84,12 +84,12 @@
     - name: Inspect the Telegraf container
       ansible.builtin.command:
         cmd: docker container inspect telegraf
-      register: telegraf_container_inspect
+      register: telegraf_container_raw
       changed_when: false
 
     - name: Assert the container runs the pinned image with the expected arguments
       vars:
-        telegraf_container: "{{ telegraf_container_inspect.stdout | from_json | first }}"
+        telegraf_container: "{{ telegraf_container_raw.stdout | from_json | first }}"
       ansible.builtin.assert:
         that:
           - telegraf_container.State.Running | bool
