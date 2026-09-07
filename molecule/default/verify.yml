@@ -33,21 +33,27 @@
         file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
         name: telegraf_defaults
 
-    - name: Wait for Telegraf service to become active (up to 180s)
-      ansible.builtin.systemd:
+    - name: Wait for the Telegraf systemd service to become active (up to 180s)
+      ansible.builtin.systemd_service:
         name: telegraf.service
       register: telegraf_service
       until: telegraf_service.status.ActiveState == 'active'
       retries: 36
       delay: 5
+      # So that giving up is reported by the assertion below rather than as a
+      # wall of systemd unit properties.
+      failed_when: false
 
-    - name: Assert Telegraf service is active
+    # `Restart=always` in the systemd unit means that even a container which crashes
+    # and gets restarted reads as active here, so this is a precondition rather than
+    # a result.
+    - name: Assert the Telegraf systemd service is active
       ansible.builtin.assert:
         that: telegraf_service.status.ActiveState == 'active'
-        fail_msg: "telegraf.service not active ({{ telegraf_service.status.ActiveState }})"
+        fail_msg: "telegraf.service is not active ({{ telegraf_service.status.ActiveState }})"
         success_msg: "telegraf.service is active"
 
-    - name: Retrieve Telegraf service log for debugging
+    - name: Retrieve the Telegraf systemd service log for debugging
       when: telegraf_debug_service_enabled | bool
       ansible.builtin.command:
         cmd: journalctl -xeu telegraf.service
