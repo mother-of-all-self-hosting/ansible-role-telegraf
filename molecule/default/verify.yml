@@ -56,7 +56,7 @@
     - name: Retrieve the Telegraf systemd service log for debugging
       when: telegraf_debug_service_enabled | bool
       ansible.builtin.command:
-        cmd: journalctl -xeu telegraf.service
+        cmd: journalctl --no-pager --output=cat --unit=telegraf.service
       changed_when: false
 
     - name: Read the Telegraf configuration file rendered by the role
