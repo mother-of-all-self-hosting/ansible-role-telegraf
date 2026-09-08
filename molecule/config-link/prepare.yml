@@ -72,7 +72,7 @@
     - name: Ensure the configuration file server is running
       ansible.builtin.command:
         cmd: >-
-          docker run --detach
+          docker run -d
           --name={{ telegraf_molecule_config_server_identifier }}
           --network={{ telegraf_molecule_config_server_network }}
           --read-only
