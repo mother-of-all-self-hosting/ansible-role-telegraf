@@ -27,123 +27,123 @@
   tasks:
     - name: Verify that Telegraf works
       block:
-    # The role is not included in this playbook, so its defaults are not in
-    # scope. Reading defaults/main.yml directly ties the version assertion
-    # below.
-    - name: Load the role defaults
-      ansible.builtin.include_vars:
-        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
-        name: telegraf_defaults
+        # The role is not included in this playbook, so its defaults are not in
+        # scope. Reading defaults/main.yml directly ties the version assertion
+        # below.
+        - name: Load the role defaults
+          ansible.builtin.include_vars:
+            file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
+            name: telegraf_defaults
 
-    - name: Wait for the Telegraf systemd service to become active (up to 180s)
-      ansible.builtin.systemd_service:
-        name: telegraf.service
-      register: telegraf_service
-      until: telegraf_service.status.ActiveState == 'active'
-      retries: 36
-      delay: 5
-      # So that giving up is reported by the assertion below rather than as a
-      # wall of systemd unit properties.
-      failed_when: false
+        - name: Wait for the Telegraf systemd service to become active (up to 180s)
+          ansible.builtin.systemd_service:
+            name: telegraf.service
+          register: telegraf_service
+          until: telegraf_service.status.ActiveState == 'active'
+          retries: 36
+          delay: 5
+          # So that giving up is reported by the assertion below rather than as a
+          # wall of systemd unit properties.
+          failed_when: false
 
-    # `Restart=always` in the systemd unit means that even a container which crashes
-    # and gets restarted reads as active here, so this is a precondition rather than
-    # a result.
-    - name: Assert the Telegraf systemd service is active
-      ansible.builtin.assert:
-        that: telegraf_service.status.ActiveState == 'active'
-        fail_msg: "telegraf.service is not active ({{ telegraf_service.status.ActiveState }})"
-        success_msg: "telegraf.service is active"
+        # `Restart=always` in the systemd unit means that even a container which crashes
+        # and gets restarted reads as active here, so this is a precondition rather than
+        # a result.
+        - name: Assert the Telegraf systemd service is active
+          ansible.builtin.assert:
+            that: telegraf_service.status.ActiveState == 'active'
+            fail_msg: "telegraf.service is not active ({{ telegraf_service.status.ActiveState }})"
+            success_msg: "telegraf.service is active"
 
-    - name: Retrieve the Telegraf systemd service log for debugging
-      when: telegraf_debug_service_enabled | bool
-      ansible.builtin.command:
-        cmd: journalctl --no-pager --output=cat --unit=telegraf.service
-      changed_when: false
+        - name: Retrieve the Telegraf systemd service log for debugging
+          when: telegraf_debug_service_enabled | bool
+          ansible.builtin.command:
+            cmd: journalctl --no-pager --output=cat --unit=telegraf.service
+          changed_when: false
 
-    - name: Read the Telegraf configuration file rendered by the role
-      ansible.builtin.slurp:
-        src: /telegraf/telegraf.conf
-      register: telegraf_rendered_configuration
+        - name: Read the Telegraf configuration file rendered by the role
+          ansible.builtin.slurp:
+            src: /telegraf/telegraf.conf
+          register: telegraf_rendered_configuration
 
-    - name: Assert the rendered configuration file is the one this scenario asked for
-      vars:
-        telegraf_rendered_configuration_content: "{{ telegraf_rendered_configuration.content | b64decode }}"
-      ansible.builtin.assert:
-        that:
-          - "'name_override = \"' ~ telegraf_molecule_metric_name ~ '\"' in telegraf_rendered_configuration_content"
-          - "'hostname = \"' ~ telegraf_molecule_agent_hostname ~ '\"' in telegraf_rendered_configuration_content"
-          - "'${MOLECULE_ENV_MARKER}' in telegraf_rendered_configuration_content"
-        fail_msg: "/telegraf/telegraf.conf does not carry what telegraf_configuration asked for"
-        success_msg: "/telegraf/telegraf.conf carries what telegraf_configuration asked for"
+        - name: Assert the rendered configuration file is the one this scenario asked for
+          vars:
+            telegraf_rendered_configuration_content: "{{ telegraf_rendered_configuration.content | b64decode }}"
+          ansible.builtin.assert:
+            that:
+              - "'name_override = \"' ~ telegraf_molecule_metric_name ~ '\"' in telegraf_rendered_configuration_content"
+              - "'hostname = \"' ~ telegraf_molecule_agent_hostname ~ '\"' in telegraf_rendered_configuration_content"
+              - "'${MOLECULE_ENV_MARKER}' in telegraf_rendered_configuration_content"
+            fail_msg: "/telegraf/telegraf.conf does not carry what telegraf_configuration asked for"
+            success_msg: "/telegraf/telegraf.conf carries what telegraf_configuration asked for"
 
-    - name: Read the environment file rendered by the role
-      ansible.builtin.slurp:
-        src: /telegraf/env
-      register: telegraf_rendered_env
+        - name: Read the environment file rendered by the role
+          ansible.builtin.slurp:
+            src: /telegraf/env
+          register: telegraf_rendered_env
 
-    - name: Assert the environment file carries the additional variables
-      ansible.builtin.assert:
-        that:
-          - "'MOLECULE_ENV_MARKER=' ~ telegraf_molecule_env_marker in (telegraf_rendered_env.content | b64decode)"
-        fail_msg: "/telegraf/env does not carry telegraf_environment_variables_additional_variables"
-        success_msg: "/telegraf/env carries telegraf_environment_variables_additional_variables"
+        - name: Assert the environment file carries the additional variables
+          ansible.builtin.assert:
+            that:
+              - "'MOLECULE_ENV_MARKER=' ~ telegraf_molecule_env_marker in (telegraf_rendered_env.content | b64decode)"
+            fail_msg: "/telegraf/env does not carry telegraf_environment_variables_additional_variables"
+            success_msg: "/telegraf/env carries telegraf_environment_variables_additional_variables"
 
-    - name: Inspect the Telegraf container
-      ansible.builtin.command:
-        cmd: docker container inspect telegraf
-      register: telegraf_container_raw
-      changed_when: false
+        - name: Inspect the Telegraf container
+          ansible.builtin.command:
+            cmd: docker container inspect telegraf
+          register: telegraf_container_raw
+          changed_when: false
 
-    - name: Assert the container runs the pinned image with the expected arguments
-      vars:
-        telegraf_container: "{{ telegraf_container_raw.stdout | from_json | first }}"
-      ansible.builtin.assert:
-        that:
-          - telegraf_container.State.Running | bool
-          # The version Renovate bumps, on the container that is actually running.
-          - telegraf_container.Config.Image == 'docker.io/library/telegraf:' ~ telegraf_defaults.telegraf_version
-          # Exactly one `--config`, pointing at the mounted file. An empty or missing
-          # argument here makes Telegraf refuse to start ("flag needs an argument").
-          - telegraf_container.Config.Cmd == ['--config', '/etc/telegraf/telegraf.conf']
-          - telegraf_container.HostConfig.ReadonlyRootfs | bool
-          - telegraf_container.Mounts | selectattr('Destination', 'equalto', '/etc/telegraf/telegraf.conf') | selectattr('RW', 'equalto', false) | list | length == 1
-        fail_msg: "The Telegraf container is not what the role's systemd unit describes"
-        success_msg: "The Telegraf container runs the pinned image with the expected arguments"
+        - name: Assert the container runs the pinned image with the expected arguments
+          vars:
+            telegraf_container: "{{ telegraf_container_raw.stdout | from_json | first }}"
+          ansible.builtin.assert:
+            that:
+              - telegraf_container.State.Running | bool
+              # The version Renovate bumps, on the container that is actually running.
+              - telegraf_container.Config.Image == 'docker.io/library/telegraf:' ~ telegraf_defaults.telegraf_version
+              # Exactly one `--config`, pointing at the mounted file. An empty or missing
+              # argument here makes Telegraf refuse to start ("flag needs an argument").
+              - telegraf_container.Config.Cmd == ['--config', '/etc/telegraf/telegraf.conf']
+              - telegraf_container.HostConfig.ReadonlyRootfs | bool
+              - telegraf_container.Mounts | selectattr('Destination', 'equalto', '/etc/telegraf/telegraf.conf') | selectattr('RW', 'equalto', false) | list | length == 1
+            fail_msg: "The Telegraf container is not what the role's systemd unit describes"
+            success_msg: "The Telegraf container runs the pinned image with the expected arguments"
 
-    - name: Wait for Telegraf to report itself started and to emit metrics (up to 180s)
-      ansible.builtin.command:
-        cmd: journalctl --unit telegraf.service --no-pager --lines 500
-      register: telegraf_journal
-      changed_when: false
-      # Two metrics rather than one: Telegraf has then survived a full flush interval
-      # past its first one, which a restart-looping agent never reaches.
-      until: telegraf_journal.stdout.count(telegraf_molecule_expected_metric) >= 2
-      retries: 36
-      delay: 5
+        - name: Wait for Telegraf to report itself started and to emit metrics (up to 180s)
+          ansible.builtin.command:
+            cmd: journalctl --unit telegraf.service --no-pager --lines 500
+          register: telegraf_journal
+          changed_when: false
+          # Two metrics rather than one: Telegraf has then survived a full flush interval
+          # past its first one, which a restart-looping agent never reaches.
+          until: telegraf_journal.stdout.count(telegraf_molecule_expected_metric) >= 2
+          retries: 36
+          delay: 5
 
-    - name: Assert Telegraf loaded the role's configuration and runs the pinned version
-      ansible.builtin.assert:
-        that:
-          - "'Loading config: /etc/telegraf/telegraf.conf' in telegraf_journal.stdout"
-          # The running process's own idea of its version, against the leaf literal
-          # that Renovate bumps. The trailing space keeps 1.39.3 from matching 1.39.30.
-          - "'Starting Telegraf ' ~ telegraf_defaults.telegraf_version ~ ' ' in telegraf_journal.stdout"
-        fail_msg: "Telegraf did not load the role's configuration, or does not run version {{ telegraf_defaults.telegraf_version }}"
-        success_msg: "Telegraf {{ telegraf_defaults.telegraf_version }} loaded the role's configuration"
+        - name: Assert Telegraf loaded the role's configuration and runs the pinned version
+          ansible.builtin.assert:
+            that:
+              - "'Loading config: /etc/telegraf/telegraf.conf' in telegraf_journal.stdout"
+              # The running process's own idea of its version, against the leaf literal
+              # that Renovate bumps. The trailing space keeps 1.39.3 from matching 1.39.30.
+              - "'Starting Telegraf ' ~ telegraf_defaults.telegraf_version ~ ' ' in telegraf_journal.stdout"
+            fail_msg: "Telegraf did not load the role's configuration, or does not run version {{ telegraf_defaults.telegraf_version }}"
+            success_msg: "Telegraf {{ telegraf_defaults.telegraf_version }} loaded the role's configuration"
 
-    - name: Assert Telegraf emitted metrics that only the role's configuration could produce
-      ansible.builtin.assert:
-        that:
-          - telegraf_journal.stdout.count(telegraf_molecule_expected_metric) >= 2
-        fail_msg: "No metric matching '{{ telegraf_molecule_expected_metric }}' reached the journal"
-        success_msg: "Telegraf collected and wrote out metrics carrying this scenario's markers"
+        - name: Assert Telegraf emitted metrics that only the role's configuration could produce
+          ansible.builtin.assert:
+            that:
+              - telegraf_journal.stdout.count(telegraf_molecule_expected_metric) >= 2
+            fail_msg: "No metric matching '{{ telegraf_molecule_expected_metric }}' reached the journal"
+            success_msg: "Telegraf collected and wrote out metrics carrying this scenario's markers"
 
-    - name: Show the Telegraf verification summary
-      ansible.builtin.debug:
-        msg:
-          - "Telegraf systemd: {{ telegraf_service.status.ActiveState }}"
-          - "Telegraf metrics observed: {{ telegraf_journal.stdout.count(telegraf_molecule_expected_metric) }}"
+        - name: Show the Telegraf verification summary
+          ansible.builtin.debug:
+            msg:
+              - "Telegraf systemd: {{ telegraf_service.status.ActiveState }}"
+              - "Telegraf metrics observed: {{ telegraf_journal.stdout.count(telegraf_molecule_expected_metric) }}"
 
       rescue:
         # Whatever went wrong, the reason is almost always in the systemd service log.
