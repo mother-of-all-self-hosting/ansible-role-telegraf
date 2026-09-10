@@ -25,6 +25,8 @@
       {{ telegraf_molecule_metric_name }},host={{ telegraf_molecule_agent_hostname }},molecule_env_marker={{ telegraf_molecule_env_marker }} used_percent=
 
   tasks:
+    - name: Verify that Telegraf works
+      block:
     # The role is not included in this playbook, so its defaults are not in
     # scope. Reading defaults/main.yml directly ties the version assertion
     # below.
@@ -142,3 +144,19 @@
         msg:
           - "Telegraf systemd: {{ telegraf_service.status.ActiveState }}"
           - "Telegraf metrics observed: {{ telegraf_journal.stdout.count(telegraf_molecule_expected_metric) }}"
+
+      rescue:
+        # Whatever went wrong, the reason is almost always in the systemd service log.
+        - name: Retrieve the Telegraf systemd service log
+          ansible.builtin.command:
+            cmd: journalctl --no-pager --output=cat --unit=telegraf.service
+          register: telegraf_service_log
+          changed_when: false
+
+        - name: Show the Telegraf systemd service log
+          ansible.builtin.debug:
+            var: telegraf_service_log.stdout_lines
+
+        - name: Fail because verification did not pass
+          ansible.builtin.fail:
+            msg: "Telegraf verification failed. The systemd service log is printed above."
