@@ -24,6 +24,9 @@
     telegraf_molecule_expected_metric: >-
       {{ telegraf_molecule_metric_name }},host={{ telegraf_molecule_agent_hostname }},molecule_env_marker={{ telegraf_molecule_env_marker }} used_percent=
 
+    telegraf_verify_units:
+      - telegraf.service
+
   tasks:
     - name: Verify that Telegraf works
       block:
@@ -35,13 +38,14 @@
             file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
             name: telegraf_defaults
 
-        - name: Wait for the Telegraf systemd service to become active (up to 180s)
+        - name: Wait for the Telegraf systemd services to become active (up to 180s each)
           ansible.builtin.systemd_service:
-            name: telegraf.service
-          register: telegraf_service
-          until: telegraf_service.status.ActiveState == 'active'
+            name: "{{ item }}"
+          register: telegraf_services
+          until: telegraf_services.status.ActiveState == 'active'
           retries: 36
           delay: 5
+          loop: "{{ telegraf_verify_units }}"
           # So that giving up is reported by the assertion below rather than as a
           # wall of systemd unit properties.
           failed_when: false
@@ -49,17 +53,20 @@
         # `Restart=always` in the systemd unit means that even a container which crashes
         # and gets restarted reads as active here, so this is a precondition rather than
         # a result.
-        - name: Assert the Telegraf systemd service is active
+        - name: Assert the Telegraf systemd services are active
           ansible.builtin.assert:
-            that: telegraf_service.status.ActiveState == 'active'
-            fail_msg: "telegraf.service is not active ({{ telegraf_service.status.ActiveState }})"
-            success_msg: "telegraf.service is active"
+            that: telegraf_services.results | map(attribute='status.ActiveState') | unique | list == ['active']
+            fail_msg: >-
+              Not every service is active:
+              {{ dict(telegraf_verify_units | zip(telegraf_services.results | map(attribute='status.ActiveState'))) }}
+            success_msg: "Every systemd service is active"
 
-        - name: Retrieve the Telegraf systemd service log for debugging
+        - name: Retrieve the Telegraf systemd services log for debugging
           when: telegraf_debug_service_enabled | bool
           ansible.builtin.command:
-            cmd: journalctl --no-pager --output=cat --unit=telegraf.service
+            cmd: "journalctl --no-pager --output=cat --unit={{ item }}"
           changed_when: false
+          loop: "{{ telegraf_verify_units }}"
 
         - name: Read the Telegraf configuration file rendered by the role
           ansible.builtin.slurp:
@@ -142,7 +149,7 @@
         - name: Show the Telegraf verification summary
           ansible.builtin.debug:
             msg:
-              - "Telegraf systemd: {{ telegraf_service.status.ActiveState }}"
+              - "Telegraf systemd: {% for unit, state in telegraf_verify_units | zip(telegraf_services.results | map(attribute='status.ActiveState')) %}{{ unit }} ({{ state }}){% if not loop.last %}, {% endif %}{% endfor %}"
               - "Telegraf metrics observed: {{ telegraf_journal.stdout.count(telegraf_molecule_expected_metric) }}"
 
       rescue:
