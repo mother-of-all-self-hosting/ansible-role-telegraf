@@ -29,6 +29,7 @@ provisioner:
       all:
         # Helper variables
         telegraf_debug_service_enabled: false
+        telegraf_restarts_check_enabled: true
 
         # This scenario configures Telegraf the way the role's documentation describes
         # for InfluxDB: not with a local file, but with `telegraf_config_link` pointing
