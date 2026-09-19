@@ -45,6 +45,14 @@ telegraf_container_extra_arguments: "{{ telegraf_container_extra_arguments_auto 
 telegraf_container_extra_arguments_auto: []
 telegraf_container_extra_arguments_custom: []
 
+# A list of extra arguments to pass to the process inside the container
+# Example: ['--SOME_ARGUMENT']
+telegraf_process_extra_arguments: "{{ telegraf_process_extra_arguments_auto + telegraf_process_extra_arguments_custom }}"
+telegraf_process_extra_arguments_auto:
+  - >-
+    {% if telegraf_configuration | trim | length > 0 %} --config {{ telegraf_configuration_container_path }}{% endif %}{% if telegraf_config_link | trim | length > 0 %} --config {{ telegraf_config_link }}{% endif %}{% if telegraf_debug %} --debug{% endif %}
+telegraf_process_extra_arguments_custom: []
+
 # List of systemd services that the Telegraf systemd service depends on
 telegraf_systemd_required_services_list: "{{ telegraf_systemd_required_services_list_default + telegraf_systemd_required_services_list_auto + telegraf_systemd_required_services_list_custom }}"
 telegraf_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"

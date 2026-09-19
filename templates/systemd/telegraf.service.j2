@@ -37,7 +37,10 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       {% for arg in telegraf_container_extra_arguments %}
       {{ arg }} \
       {% endfor %}
-      {{ telegraf_container_image }}{% if telegraf_configuration | trim | length > 0 %} --config {{ telegraf_configuration_container_path }}{% endif %}{% if telegraf_config_link | trim | length > 0 %} --config {{ telegraf_config_link }}{% endif %}{% if telegraf_debug %} --debug{% endif %}
+      {{ telegraf_container_image }} \
+      {% for arg in telegraf_process_extra_arguments %}
+      {{ arg }} \
+      {% endfor %}
 
 {% for network in telegraf_container_additional_networks %}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} network connect {{ network }} {{ telegraf_identifier }}
