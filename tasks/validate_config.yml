@@ -25,7 +25,6 @@
   with_items:
     - telegraf_uid
     - telegraf_gid
-    - telegraf_container_network
     - telegraf_configuration_container_path
 
 # Telegraf exits at startup unless it is given a configuration which defines at least
